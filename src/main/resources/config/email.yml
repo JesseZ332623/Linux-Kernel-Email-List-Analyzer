@@ -1,0 +1,23 @@
+# 邮箱服务配置属性
+app:
+  email:
+    # 邮件服务器域名
+    host: "imap.gmail.com"
+    # 邮件服务端口号
+    port: 993
+    # 是否启用 SSL
+    ssl: true
+    # SSL 传输协议名
+    ssl-protocols: "TLSv1.2"
+    # 建立连接的超时时间限制（单位：毫秒）
+    connection-timeout: 30000
+    # 连接建立后，等待服务器响应的最大时间（单位：毫秒）
+    timeout: 30000
+    # 是否启用调试模式
+    debug: false
+    # 连接邮箱服务的用户名
+    username: "zhj3191955858@gmail.com"
+    # 连接邮箱服务的十六位 App 专用密码（从数据库中获取）
+    # password:
+    # 各个线程争抢 Store 实例的等待超时时间
+    store-lock-wait-timeout: 10s
