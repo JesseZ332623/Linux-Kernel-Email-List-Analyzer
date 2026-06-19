@@ -1,0 +1,6 @@
+# Log back 日志属性配置
+
+logging:
+  # 在服务启动时，在当前目录下创建日志目录
+  file:
+    path: ./LKML-Analyzer-Logs
