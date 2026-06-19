@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邮件分析结果</title>
+    <style>
+        /* GitHub 暗色主题 */
+        :root {
+          --bg-primary: #0d1117;
+          --bg-secondary: #161b22;
+          --bg-tertiary: #21262d;
+          --border-color: #30363d;
+          --text-primary: #c9d1d9;
+          --text-secondary: #8b949e;
+          --text-link: #58a6ff;
+          --text-highlight: #f0f6fc;
+          --accent-color: #1f6feb;
+          --danger-color: #f85149;
+          --success-color: #3fb950;
+          --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+          --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+        }
+
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          background-color: var(--bg-primary);
+          color: var(--text-primary);
+          font-family: var(--font-sans);
+          line-height: 1.6;
+          padding: 2rem;
+          max-width: 960px;
+          margin: 0 auto;
+        }
+
+        .card {
+          background-color: var(--bg-secondary);
+          border: 1px solid var(--border-color);
+          border-radius: 6px;
+          padding: 1.5rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: var(--text-highlight);
+          border-bottom: 1px solid var(--border-color);
+          padding-bottom: 0.75rem;
+          margin-bottom: 1rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .email-subject {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: var(--text-link);
+          margin-bottom: 0.75rem;
+          word-break: break-word;
+        }
+
+        .email-meta {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+          display: flex;
+          gap: 2rem;
+          flex-wrap: wrap;
+          margin-bottom: 1rem;
+        }
+
+        .email-meta .from {
+          color: var(--text-secondary);
+        }
+
+        .email-meta .time {
+          color: var(--text-secondary);
+        }
+
+        .email-body {
+          background-color: var(--bg-tertiary);
+          border: 1px solid var(--border-color);
+          border-radius: 6px;
+          padding: 1rem;
+          font-family: var(--font-mono);
+          font-size: 0.9rem;
+          white-space: pre-wrap;
+          word-break: break-word;
+          color: var(--text-primary);
+          max-height: 400px;
+          overflow-y: auto;
+        }
+
+        .ai-section {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .ai-meta {
+          display: grid;
+          grid-template-columns: auto 1fr;
+          gap: 0.5rem 1.5rem;
+          font-size: 0.9rem;
+        }
+
+        .ai-meta dt {
+          color: var(--text-secondary);
+          font-weight: 500;
+          min-width: 120px;
+        }
+
+        .ai-meta dd {
+          color: var(--text-primary);
+          font-family: var(--font-mono);
+          font-size: 0.85rem;
+          word-break: break-all;
+        }
+
+        .ai-content {
+          background-color: var(--bg-tertiary);
+          border: 1px solid var(--border-color);
+          border-radius: 6px;
+          padding: 1rem;
+          font-family: var(--font-mono);
+          font-size: 0.9rem;
+          white-space: pre-wrap;
+          word-break: break-word;
+          color: var(--text-primary);
+          max-height: 500px;
+          overflow-y: auto;
+        }
+
+        .token-stats {
+          display: flex;
+          gap: 1.5rem;
+          background-color: var(--bg-tertiary);
+          border-radius: 6px;
+          padding: 0.75rem 1rem;
+          margin-top: 0.5rem;
+        }
+
+        .token-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .token-label {
+          font-size: 0.75rem;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .token-value {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: var(--text-highlight);
+          font-family: var(--font-mono);
+        }
+
+        .fingerprint {
+          margin-top: 1rem;
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          font-family: var(--font-mono);
+          background-color: var(--bg-tertiary);
+          padding: 0.5rem 1rem;
+          border-radius: 6px;
+          word-break: break-all;
+        }
+
+        .fingerprint span {
+          color: var(--text-secondary);
+          margin-right: 0.5rem;
+        }
+
+        hr {
+          border: none;
+          border-top: 1px solid var(--border-color);
+          margin: 1.5rem 0;
+        }
+    </style>
+</head>
+<body>
+<div th:object="${data}">
+    <!-- 邮件卡片 -->
+    <div class="card">
+        <div class="card-title">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAFaElEQVR4nO2ZCUwUVxjHH9bdcdWaHtGk2sS0MMOyWuvMIjOLxSW6HsGotdYQ69FDV5NGaUutldSGYD1KY2hFEUWpGK+KR9RKo0DZHVBqPQIirYooihUvDu+iC/tvZgAZWthd6bKsyf6TL5vdZN78/u9973vfzBLik08++eRI/Y3Gbnq9XkWeJQXqhTcYTthOs/xdhhPAsPzfDMdnBbDCOEKIH/FmMSwfSbPCYxm8laA5YTOZPPk54o0KCAnpxbDCnbbgm4P/mHijAlh+knN4KaWEcq9MJZoLmd8acFBwKAbwYS1+82dDDcTbRHNCjDAiAmnb0jEucpoMajCNRdGf53D56jVMnPpB815ghbnE20Sz/KLV6zciNm4xMjJ/lUGXJyQiKXktktelYNf+DIUB/ivibWL0/MJtu/bC398faZu3yqCrUn5EUFAQdDodsqx5yjT6lHibaI6fPX9RHLYnz8SFPf3xIFODwq39sGPlaMQs/ASxy1coyimfQLyxCn03/zXYrd1Qb6EAkcKj7IbPv3ZrsGVJP6WBI8TbFKjnw0u2aVDbCC3FrX1qHIxX4cwmNcoPMMoUqtfq9a8QbxLNGoYtiQl/VLjxeeQnqZCXqELBBjXsVgq24zyqr4oIGzPerjiVY4g3ieaEbyM/ND+8fTUbdUcDYc/rBduxENy9tBWVNbdRWXMH8SuTlJWoqv+bxheIN0g7aAijDQ59/PXSeBm0rSg+VwptcKiyrdjU2exEpzP2ZDihWALKyMxxaECKGXPmtjiVA1h+UqcaoFl+vQRimvAublbVODWwc++Blh0qK1R22oamBwsmhhPkjfnzoSyn8FJcu1kJqeVgWpjgd3QGfxeGEwolA+aoz12Cb4qVyesRPvZtqSrVPTExWDB5/OGF4QyV4RETbMVnzz+VgbIrFRhkMGLmvGgIpojaxlU47El+P5oTTk2YMu24s8rTVsz57Au51U7ZtKU5lfQ87xF6mgsJY1i+bumKH2p+O1HQLgPfJ6fI0Jt37JZXo7GsJnrIAJ+qDTacWpawCreqGw6pp41dje31T3v2QW80Na3CaU/w+9GsUMENG5ktlcT2wEuRacmVU+hkUbHycLN3+GuY1wcZ+kg348JGlEglsb0GrPlHEfXlImRk5SjLqa3DDdT8oplYurPXw7gof3kDttdAYfEZlJSVwxwVrWwtCjoUHhbVQIjU/aZ2OXpWIBLXbXgq8Oobp1F/pB9Kc6ZjzPTZGDXVjIjp5vvzZg24lLW6T3rHgIN0QW63oRDVV5rgpbhzsAeMw/VYEPsNrt+qcsnAvYsp8rV2K4VRU2di5HuzsHDBWJv0vWHcriHuhRepeFipaiW4Mqxre8vLP/l9M0rLyp0auH8h8cm1uRsZHErR4XFOd8WYavc+L0OkCtqCb4p5H2llE8PHvYPyiusODTwoWe5wLFipYuSTl9xnwEolODNwY39PcKFD5HJ4rOCU4xT6I8axAVE2cRYiNdpNBtTRTm8oUkiP74s1qWkO4aVDq2jPW3ZXxoOovu4eA6I6x5UbSpvQPG0gFsQuxuGjx+W2WYI+f/Ey0ranY/yUGXKa3cjoXeECfBlEatT/h88jL7o2Ww3xe+rLT2q6Nji0XjdkqO3f70prs6kqB6nzCFZqGU6Q7u6ZfRA/iOpUiJTNFQNVGd3vSa9MaI6vloJh+csMK1yQnhtojr8knbR1Fqq2DfiTyFMNcAv4f4wcIj1goUwQqThY1Udgpepbh1CLjsYxGo1d6y1UUSvXJeIE8dxfUbBoXpXqtTxrzTN4F7nUCKfXitRwWKlzEKWVUJ+HqIr0DHVbQIc1fSGqOOQTTaeC+OSTT+SZ0z9lXjVackye4QAAAABJRU5ErkJggg=="
+                 alt="linux"
+                 style="width: 25px; height: 25px; vertical-align: middle;" />
+            内核邮件详情
+        </div>
+        <!-- messageId 作为标题显示，但更醒目的是 subject -->
+        <div class="email-subject" th:text="*{kernelEmail.subject}">邮件标题</div>
+        <div class="email-meta">
+            <div class="from">
+                <span style="color: var(--text-secondary);">发件人：</span>
+                <span th:text="*{kernelEmail.from}">unknown</span>
+            </div>
+            <div class="time">
+                <span style="color: var(--text-secondary);">时间 (LKML)：</span>
+                <span th:text="*{kernelEmail.kernalTime}">unknown</span>
+            </div>
+        </div>
+        <div class="email-body" th:text="*{kernelEmail.textContent}">邮件正文...</div>
+        <!-- 可选的 messageId 显示，如果仍需，可以放在底部 -->
+        <div style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-secondary);">
+            Message-ID: <span th:text="*{kernelEmail.messageId}" style="font-family: monospace;"></span>
+        </div>
+    </div>
+
+    <!-- AI 响应卡片 -->
+    <div class="card">
+        <div class="card-title">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAEs0lEQVR4nO1ZWYgcVRStiXHBDRRcENcfP0RcYhA3DLiAW2am7utSE5cBl9GZureGuOASoQOC/qjgR9yCIIpbRDAfGSOiGAmoRGKQKGKMMYlRUYMSNSKZO0deTfd0dXUtXdU9EwJ94f29V++cd/dbjtOTnvSkJz3Zn8UVnGhY1143jEP3NRbn5ntxmGEsItGVRnS7Yd1LrHsowHDaGeKJqpFJuILKjAHzRnG866PfiD5qWJ83om9YkMT6ohFdRgwm1teJ9W8LJrpIdHm1ijmpBEQ31fZt8gTHdBE2+ijANUb0/TiodheJ/jk8jAOzbiHRvxpnrNZw54Iq5uahI8YjxLoh1S5J9OOywCOA/um/H0ekgahWMYdYNYH4evduHJtmDST6QriX9Y+WDSbA5Ub0987B18CwvpNFwrDuSDzL+lb4mD6uNKKrjOhOq9HYA61rZhfgvGaVdmmxbvUY5yeaguh4ypm9hvWZnO8+Of2hgRGcRKI/dx18wyz+JcYNrRrAorLfdAOcWfsM+oj1vZkCHzEnrQjuiBK4SnBwPRIV1OrqhhoZgzMNvrF00kaamN+dZR2+APgd/T5OiNrh+tkjMKUJYtzeRMLHfMP6UxtnNwyM4dQY+9kDHyVhBH5TEBnDORn7v6gw7mrJKyRY2vQyopttbUKsn9rQNeNERJ+1JUgYMgWVVuB40FuCo5MiWC0K6LuNj2FhS5gbxSnkYzGxvmTrmpkhojtJMGJE17TaO65OBV+z/+/rm13BBVl7F4/gKMNYkpp8kl94wgQYchln25rJsP5SjBwuyiYQeVXyYZw2xBvF4ST6VJhs8m39P+uwnuAMe3ZhgOOM6MZ2/eQmwZF5GpiImNA9TgFxfcwj1m25YFg/IdZd9ZK5Vs/kJ03Wb3NBEOuvEXWvLEIgAiYzDLsCCYMC62PT5BmXJRVyMd94NZ+A6JdRZ7JZuSgJ2021V3br47G7X8v2H9ySTyBWQng+LnRKiK04ifXzHIfeHLVp18e8LPtPK6mbxIg+EbtkuVNSvAAnE+tvOXb9tRHcVms9xzO0taatS1vqINbdmYkjR1zGtcXC5GSy3wRw27bf1l5WlzkdyHTHVHIR6zfttJXRC1+Ja8Fm4LIEQn+IJMjiBDBY6ELbLZW2wRQhxsXtJDrT6uhvl7pwqu9sCWMPZZ0ZGsIhWZoyjIcLms620qMVj3FaQtM8mRWLbTlcM7m1SeHXTh3aHcuQ9UMf80uBjwC6PkGlE+RjLJF0gEuicZtEn66XxnUJax/WLTlmM2EHZ043hESfS3mhFUnjEWL9KB5BbJMU3TPo4/TsKlTXZY1eConn4QDD+nLiRaxbbXyOdkW2PEgguyfevIckRH9IJcG62zY3tivrmERtYrYiw1532ckdiX4WNunpoFZHRh/1UvqDXJ9g/bBjEuGoRbA0Wm6XXqxbbHi0g+GwswtzhG7PMKmNZYrK1HhOrF91TKLhsONToRJ9RnBuJcCNRnCfETxgoxoxrvCqOMjpptgPhiGzQCuZoIXvbAHn7EtZUMVcIxiwdXxu1TnlKz8S65vW8QvVNrMlNvnZqUGFcav9C2OXNQkaxaV2RD9rQHrSk544+638DxvdJEmGXJLhAAAAAElFTkSuQmCC"
+                 alt="DeepSeek"
+                 style="width: 25px; height: 25px; vertical-align: middle;" />
+            AI 分析结果
+        </div>
+        <div class="ai-section">
+            <dl class="ai-meta">
+                <dt>响应 ID</dt>
+                <dd th:text="*{aiModelAnswerResponse.id}">-</dd>
+                <dt>模型名称</dt>
+                <dd th:text="*{aiModelAnswerResponse.model}">-</dd>
+            </dl>
+            <div>
+                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.5rem;">分析内容</div>
+                <div class="ai-content" th:utext="*{aiModelAnswerResponse.choices[0].message.content}">
+                    AI 回复内容...
+                </div>
+            </div>
+            <!-- Token 用量统计 -->
+            <div class="token-stats">
+                <div class="token-item">
+                    <span class="token-label">Prompt Tokens</span>
+                    <span class="token-value" th:text="*{aiModelAnswerResponse.usage.promptTokens}">0</span>
+                </div>
+                <div class="token-item">
+                    <span class="token-label">Completion Tokens</span>
+                    <span class="token-value" th:text="*{aiModelAnswerResponse.usage.completionTokens}">0</span>
+                </div>
+                <div class="token-item">
+                    <span class="token-label">Total Tokens</span>
+                    <span class="token-value" th:text="*{aiModelAnswerResponse.usage.totalTokens}">0</span>
+                </div>
+            </div>
+            <!-- 系统指纹 -->
+            <div class="fingerprint">
+                <span>System Fingerprint:</span>
+                <span th:text="*{aiModelAnswerResponse.systemFingerPrint}">-</span>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
