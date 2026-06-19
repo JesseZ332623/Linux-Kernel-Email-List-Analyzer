@@ -1,0 +1,14 @@
+# JDBC 数据库属性配置
+spring:
+  datasource:
+    url: jdbc:mysql://192.168.31.104:3306/lkml_analyze?serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&useSSL=false
+    username: Jesse_EC233
+    password: 3191955858_EC
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 15
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 10000
+      validation-query: SELECT 1
