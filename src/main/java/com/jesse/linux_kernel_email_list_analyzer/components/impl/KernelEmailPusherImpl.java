@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -48,6 +49,10 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
     DateTimeFormatter KERNEL_FORMAT
         = DateTimeFormatter.ofPattern("EEE, MMM d yyyy HH:mm:ss Z (zzzz)");
 
+    /** 默认的邮件标记（阅后即焚）。*/
+    private static final
+    Flags DEFAULT_FLAGS = defaultFlags();
+
     /** RabbitMQ 队列交换机配置属性类。*/
     private final LKMLRabbitMQProperties properties;
 
@@ -69,22 +74,34 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
     @Value("${app.lkml-push-limit}")
     private int kernalEmailPushLimit;
 
+    private static Flags defaultFlags()
+    {
+        final Flags flags = new Flags();
+
+        flags.add(Flags.Flag.SEEN);
+        flags.add(Flags.Flag.DELETED);
+
+        return flags;
+    }
+
     /** 内核补丁邮件解析。*/
     private PlainTextEmail
     parseToPlainText(Message message) throws Exception
     {
         final PlainTextEmail plainTextEmail = new PlainTextEmail();
 
+        // Message 采用懒加载策略，获取正文是一次网络 I/O
         final Object content       = message.getContent();
         final String[] messageIds  = message.getHeader("Message-ID");
         final Address[] from       = message.getFrom();
         final Instant sentInstant  = message.getSentDate().toInstant();
 
-        if (content instanceof String)
-        {
-            if (message.isMimeType("text/plain")) {
-                plainTextEmail.setTextContent(String.valueOf(content));
-            }
+        if (!(content instanceof String)) {
+            return null;
+        }
+
+        if (message.isMimeType("text/plain")) {
+            plainTextEmail.setTextContent(String.valueOf(content));
         }
 
         plainTextEmail.setMessageId(
@@ -100,6 +117,8 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
         plainTextEmail.setSubject(message.getSubject());
         plainTextEmail.setUtcTime(sentInstant.atZone(UTC).format(ISO_DATE_TIME));
         plainTextEmail.setKernalTime(sentInstant.atZone(KERNEL_TIMEZONE).format(KERNEL_FORMAT));
+
+        log.info("Parse kernel email (message-id = {}) complete.", plainTextEmail.getMessageId());
 
         return plainTextEmail;
     }
@@ -131,16 +150,13 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
      * 保留最新的前 limit 封返回（limit 填 -1 则表示全部）。
      * 被拉取的邮件的前 limit 封会被标记为已读。
      */
-    private List<PlainTextEmail> fetchUnreadPlainTextEmails(int limit)
+    private List<Message>
+    fetchUnreadPlainTextEmails(Folder inbox, int limit)
     {
         try
         {
-            final Store  store = this.singleImapConnection.getStore();
-            final Folder inbox = store.getFolder("INBOX");
             final FlagTerm flagTerm
                 = new FlagTerm(new Flags(Flags.Flag.SEEN), false);
-
-            inbox.open(Folder.READ_WRITE);
 
             final int unreadCount = inbox.getUnreadMessageCount();
 
@@ -152,52 +168,21 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
                 return List.of();
             }
 
-            final Message[] messages = inbox.search(flagTerm);
+            // (1) 由于 IMAP 协议的限制，
+            // 只能一次性全量拉去未读邮件再做筛选，
+            // 后续的标记操作也需要这个数组。
+            final Message[] messages
+                = this.reverseUnreadMessages(inbox.search(flagTerm), limit)
+                      .toArray(Message[]::new);
 
-            log.info("Searched {} unread emails.", messages.length);
+            log.info("Pull and filter {} latest unread emails.", messages.length);
 
-            final List<PlainTextEmail> plainTextEmails
-                = this.reverseUnreadMessages(messages, limit)
-                      .map((message) ->
-                          CompletableFuture.supplyAsync(
-                              () -> {
-                                  try
-                                  {
-                                      final PlainTextEmail plainTextEmail
-                                          = this.parseToPlainText(message);
+            // (2) 批量标记已读并删除
+            if (messages.length > 0) {
+                inbox.setFlags(messages, DEFAULT_FLAGS, true);
+            }
 
-                                      final Flags flags = new Flags();
-                                      flags.add(Flags.Flag.SEEN);
-                                      flags.add(Flags.Flag.DELETED);
-
-                                      // 标记这封邮件为 “阅后即焚”
-                                      message.setFlags(flags, true);
-
-                                      log.info(
-                                          "Set flag [SEEN & DELETED] for email: {}",
-                                          plainTextEmail.getMessageId()
-                                      );
-
-                                      return plainTextEmail;
-                                  }
-                                  catch (Exception exception)
-                                  {
-                                      log.error("Parse email failed.", exception);
-                                      return null;
-                                  }
-                              },
-                              this.emailServiceExecutor
-                          )
-                      )
-                     .toList()
-                     .stream()
-                     .map(CompletableFuture::join)
-                     .filter(Objects::nonNull)
-                     .toList();
-
-            inbox.close(true);
-
-            return plainTextEmails;
+            return List.of(messages);
         }
         catch (Exception exception)
         {
@@ -225,38 +210,94 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
             return;
         }
 
+        final Store store = this.singleImapConnection.getStore();
+        Folder inbox      = null;
+
         try
         {
-            final List<PlainTextEmail> kernalEmails
-                = this.fetchUnreadPlainTextEmails(kernalEmailPushLimit);
+            inbox = store.getFolder("INBOX");
+            inbox.open(Folder.READ_WRITE);
 
-            int successCount = 0;
+            // (1) 从邮箱服务拉取所有的未读邮件， 保留最新的前 limit 封返回。
+            final List<Message> messages
+                = this.fetchUnreadPlainTextEmails(inbox, kernalEmailPushLimit);
 
-            for (PlainTextEmail kernalEmail : kernalEmails)
-            {
-                try
-                {
-                    this.rabbitTemplate.convertAndSend(
-                        this.properties.getExchangeName(),
-                        this.properties.getRoutingKey(),
-                        kernalEmail,
-                        new CorrelationData(kernalEmail.getMessageId())
-                    );
-
-                    ++successCount;
-                }
-                catch (AmqpException exception) {
-                    log.error("Kernel email join queue failed", exception);
-                }
+            if (CollectionUtils.isEmpty(messages)) {
+                return;
             }
 
-            log.info(
-                "Kernel email push complete: {} / {}",
-                successCount, kernalEmails.size()
-            );
+            // (2) 一边解析一边往 MQ 推送邮件，
+            // Rabbit MQ 与服务建立的是 AMQP 长连接，目前的体量不需要批量操作。
+            final List<CompletableFuture<PlainTextEmail>> pushFutures
+                = messages.stream()
+                    .filter(Objects::nonNull)
+                    .map((message) ->
+                        CompletableFuture.supplyAsync(() -> {
+                            try {
+                                return this.parseToPlainText(message);
+                            }
+                            catch (Exception exception)
+                            {
+                                log.error("Parse email failed.", exception);
+                                return null;
+                            }
+                            }, this.emailServiceExecutor)
+                            .thenApply((kernalEmail) -> {
+                                if (Objects.nonNull(kernalEmail))
+                                {
+                                    try
+                                    {
+                                        this.rabbitTemplate.convertAndSend(
+                                            this.properties.getExchangeName(),
+                                            this.properties.getRoutingKey(),
+                                            kernalEmail,
+                                            new CorrelationData(kernalEmail.getMessageId())
+                                        );
+
+                                        log.info(
+                                            "Pushed kernel email (message-id = {}) complete.",
+                                            kernalEmail.getMessageId()
+                                        );
+
+                                        return kernalEmail;
+                                    }
+                                    catch (AmqpException exception)
+                                    {
+                                        log.error("Kernel email join queue failed", exception);
+                                        return null;
+                                    }
+                                }
+
+                                return null;
+                            })
+                ).toList();
+
+            // (3) 等待完成并统计
+            final long successCount
+                = pushFutures.stream()
+                    .map(CompletableFuture::join)
+                    .filter(Objects::nonNull)
+                    .count();
+
+            log.info("Pushed kernel emails complete ({} / {}).", successCount, messages.size());
         }
-        finally {
-            this.pushing.set(false);
+        catch (MessagingException exception) {
+            log.error("Get INBOX folder failed.", exception);
+        }
+        finally
+        {
+            try
+            {
+                if (Objects.nonNull(inbox) && inbox.isOpen())
+                {
+                    // (4) 关闭收件箱列表，
+                    // expunges 值为 true 意味着全部删除标记为 DELETED 的邮件。
+                    inbox.close(true);
+                }
+            }
+            catch (Exception exception) {
+                log.error("Close inbox failed.", exception);
+            }
         }
     }
 }
