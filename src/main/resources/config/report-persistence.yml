@@ -1,7 +1,0 @@
-# LKML 分析报告持久化配置属性
-app:
-  # 报告需要保存到的本地路径
-  report-path-prefix: "F:\LKML-Analyze-Report"
-
-  # 报告文件名最大长度
-  max-file-name-len: 200
