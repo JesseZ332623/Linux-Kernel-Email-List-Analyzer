@@ -8,6 +8,7 @@ import com.jesse.linux_kernel_email_list_analyzer.pojo.AnalyzeResultTemplateData
 import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelChatMessage;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelChatThinking;
+import com.jesse.linux_kernel_email_list_analyzer.properties.DeepSeekChatProperties;
 import com.jesse.linux_kernel_email_list_analyzer.repository.ApplicationApiKeysRepository;
 import com.jesse.linux_kernel_email_list_analyzer.request.AIModelChatRequest;
 import com.jesse.linux_kernel_email_list_analyzer.response.AIModelAnswerResponse;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -24,6 +26,7 @@ import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.Message;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /** Linux 内核补丁邮件分析服务。*/
@@ -32,76 +35,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class KernelEmailAnalyzerService
 {
-    /** AI 模型对话端点。*/
-    private static final
-    String MODEL_ENDPOINT_URL = "https://api.deepseek.com/chat/completions";
-
-    /** 模型名称。*/
-    private static final String MODEL_NAME = "deepseek-v4-pro";
-
-    /** 端点访问身份凭证名。*/
-    private static final
-    String AUTHORIZATION_NAME = "deepseek-lkml-analyer";
-
-    /** 模型系统指令提示词。*/
-    private static final
-    String SYSTEM_ROLE_PROMPT = """
-        你是一位资深的 Linux 内核专家，拥有 20 年以上的内核开发经验。你曾经是 Linux 内核的核心维护者之一，深度参与过内存管理、进程调度、文件系统等子系统的开发。
-    
-        在分析 Linux 内核邮件列表时，请遵循以下原则：
-    
-        1. **专业视角**：从内核架构、设计理念和工程实践的角度分析问题，指出技术决策背后的权衡（trade-off）。
-    
-        2. **精准定位**：准确识别邮件涉及的子系统（如 VFS、MM、Scheduler、Networking 等）和关键数据结构。
-    
-        3. **历史洞察**：能够联系内核的发展历史，说明某个补丁或讨论在内核演进中的位置和意义。
-    
-        4. **社区文化理解**：理解 Linux 内核社区的工作方式，包括：
-           - 补丁提交规范（Signed-off-by、Reviewed-by、Acked-by 等标签的含义）
-           - 维护者层级关系（子系统维护者 → 顶级维护者 → Linus）
-           - 代码审查的严格程度和常见争论点
-    
-        5. **技术深度**：
-           - 能解释 RCU、内存屏障、缓存一致性等底层概念
-           - 理解用户空间与内核空间的交互
-           - 关注性能、安全性和可维护性的平衡
-    
-        6. **表达风格**：
-           - 使用精确的技术术语
-           - 像 Linus 那样直接、犀利，但保持建设性
-           - 需要时会引用内核源码路径和函数名来佐证观点
-    
-        7. **输出格式**：
-           - 先给出核心结论
-           - 然后展开技术分析
-           - 最后说明影响范围和建议
-    """;
-
-    /** 模型用户指令提示词。*/
-    private static final
-    String USER_ROLE_PROMPT_PATTERN = """
-        邮件具体内容如下所示：
-        RFC 822 消息 ID：%s
-        发送人：%s
-        发送时间：%s
-        标题：%s
-        正文：%s
-    
-        现在你要做的就是先翻译这封邮件，
-        然后详细分析这封内核补丁邮件，回答需要遵循 Markdown 语法，但是最外面不要加上
-        ```md
-        ```
-        这样的代码块。
-    """;
-
-    /** 默认开启推理模式。*/
-    private static final
-    AIModelChatThinking THINKING_OPTION = new AIModelChatThinking("enabled");
-
-    /** 分析任务中 AI 的系统指令是固定的。*/
-    private static final
-    AIModelChatMessage SYSTEM_ROLE_MESSAGE
-        = new AIModelChatMessage("system", SYSTEM_ROLE_PROMPT);
+    /** DeepSeek 模型对话属性配置类。*/
+    private final DeepSeekChatProperties deepSeekChatProperties;
 
     /** Spring 封装的 HTTP 客户端。*/
     private final RestTemplate restTemplate;
@@ -119,20 +54,65 @@ public class KernelEmailAnalyzerService
     /** 通用的 Jackson 对象映射器。*/
     private final ObjectMapper objectMapper;
 
+    /** Spring 封装的资源加载器。*/
+    private final ResourceLoader resourceLoader;
+
     /** 用内核补丁邮件的内容格式化用户指令提示词。*/
     private AIModelChatMessage
     formatUserRolePrompt(PlainTextEmail kernalEmail)
     {
-        return new AIModelChatMessage(
-            "user",
-            USER_ROLE_PROMPT_PATTERN.formatted(
-                kernalEmail.getMessageId(),
-                kernalEmail.getFrom(),
-                kernalEmail.getKernalTime(),
-                kernalEmail.getSubject(),
-                kernalEmail.getTextContent()
-            )
-        );
+        try
+        {
+            final String userRolePromptPattern
+                = this.resourceLoader
+                      .getResource(this.deepSeekChatProperties.getUsrPromptsClasspath())
+                      .getContentAsString(StandardCharsets.UTF_8);
+
+            return new
+            AIModelChatMessage(
+                "user",
+                userRolePromptPattern.formatted(
+                    kernalEmail.getMessageId(),
+                    kernalEmail.getFrom(),
+                    kernalEmail.getKernalTime(),
+                    kernalEmail.getSubject(),
+                    kernalEmail.getTextContent()
+                )
+            );
+        }
+        catch (IOException exception)
+        {
+            log.error(
+                "User LKML prompt pattern {} not exist...",
+                this.deepSeekChatProperties.getUsrPromptsClasspath()
+            );
+
+            return new AIModelChatMessage("user", "");
+        }
+    }
+
+    /** 从 classpath 中读取 AI 系统指令提示词。*/
+    private AIModelChatMessage readSystemRolePrompt()
+    {
+        try
+        {
+            final String userRolePromptPattern
+                = this.resourceLoader
+                      .getResource(this.deepSeekChatProperties.getSysPromptsClasspath())
+                      .getContentAsString(StandardCharsets.UTF_8);
+
+            return new
+            AIModelChatMessage("system", userRolePromptPattern);
+        }
+        catch (IOException exception)
+        {
+            log.error(
+                "System LKML prompt {} not exist...",
+                this.deepSeekChatProperties.getSysPromptsClasspath()
+            );
+
+            return new AIModelChatMessage("system", "");
+        }
     }
 
     /** 将内核邮件数据提交给 AI 模型分析，返回分析结果字符串。*/
@@ -146,16 +126,17 @@ public class KernelEmailAnalyzerService
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         httpHeaders.set(
             "Authorization",
-            "Bearer " + this.applicationApiKeysRepository.findByAppName(AUTHORIZATION_NAME)
+            "Bearer " + this.applicationApiKeysRepository
+                            .findByAppName(this.deepSeekChatProperties.getAuthorizationName())
         );
 
         final AIModelChatRequest request = new AIModelChatRequest();
 
-        request.setModel(MODEL_NAME);
-        request.setMessages(List.of(SYSTEM_ROLE_MESSAGE, this.formatUserRolePrompt(kernelEmail)));
-        request.setThinking(THINKING_OPTION);
-        request.setReasoningEffort("high");
-        request.setStream(false);
+        request.setModel(this.deepSeekChatProperties.getModelName());
+        request.setMessages(List.of(this.readSystemRolePrompt(), this.formatUserRolePrompt(kernelEmail)));
+        request.setThinking(new AIModelChatThinking(this.deepSeekChatProperties.getThinking()));
+        request.setReasoningEffort(this.deepSeekChatProperties.getReasoningEffort());
+        request.setStream(this.deepSeekChatProperties.isStream());
 
         final HttpEntity<AIModelChatRequest> httpEntity
             = new HttpEntity<>(request, httpHeaders);
@@ -165,13 +146,16 @@ public class KernelEmailAnalyzerService
 
         final String responseJSON
             = this.restTemplate
-                  .postForObject(MODEL_ENDPOINT_URL, httpEntity, String.class);
+                  .postForObject(
+                      this.deepSeekChatProperties.getModelEndpointUrl(),
+                      httpEntity, String.class
+                  );
 
         stopWatch.stop();
 
         log.info(
             "POST {} call took [{}] milliseconds.",
-            MODEL_ENDPOINT_URL, stopWatch.getDuration().toMillis()
+            this.deepSeekChatProperties.getModelEndpointUrl(), stopWatch.getDuration().toMillis()
         );
 
         return
