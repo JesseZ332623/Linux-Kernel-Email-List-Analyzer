@@ -1,7 +1,8 @@
 package com.jesse.linux_kernel_email_list_analyzer.components.impl;
 
 import com.jesse.linux_kernel_email_list_analyzer.components.KernelEmailPusher;
-import com.jesse.linux_kernel_email_list_analyzer.components.SingleImapConnection;
+import com.jesse.linux_kernel_email_list_analyzer.components.imap_connection.SingleImapConnection;
+import com.jesse.linux_kernel_email_list_analyzer.components.imap_connection.StoreOperator;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
 import com.jesse.linux_kernel_email_list_analyzer.properties.LKMLRabbitMQProperties;
 import jakarta.mail.*;
@@ -273,9 +274,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
 
             log.info("Total number of unread emails: {}", unreadCount);
 
-            if (unreadCount == 0)
-            {
-                inbox.close(false);
+            if (unreadCount == 0) {
                 return EMPTY_MESSAGE_ARRAY;
             }
 
@@ -368,29 +367,11 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
         return null;
     }
 
-    /** 每个整点自动执行一次推送。*/
-    @Scheduled(cron = "0 0 * * * ?")
-    public void scheduledPush() {
-        this.push();
-    }
-
-    /**
-     * 手动的将邮箱中的未读内核补丁邮件推送到消息队列，
-     * 返回成功推送的邮件数量。
-     */
-    @Override
-    public void push()
+    /** 推送操作的核心逻辑。*/
+    private StoreOperator<Void> doPush()
     {
-        if (!this.pushing.compareAndSet(false, true))
-        {
-            log.warn("Previous push task is still running, skip this round.");
-            return;
-        }
-
-        try
-        {
-            final Store store = this.singleImapConnection.getStore();
-            Folder inbox      = null;
+        return (store) -> {
+            Folder inbox = null;
 
             try
             {
@@ -428,9 +409,6 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
                     log.info("Pushed kernel emails complete ({} / {}).", successCount, batch.size());
                 }
             }
-            catch (MessagingException exception) {
-                log.error("Get INBOX folder failed.", exception);
-            }
             finally
             {
                 try
@@ -446,6 +424,35 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
                     log.error("Close inbox failed.", exception);
                 }
             }
+
+            return null;
+        };
+    }
+
+    /** 每个整点自动执行一次推送。*/
+    @Scheduled(cron = "0 0 * * * ?")
+    public void scheduledPush() {
+        this.push();
+    }
+
+    /**
+     * 手动的将邮箱中的未读内核补丁邮件推送到消息队列，
+     * 返回成功推送的邮件数量。
+     */
+    @Override
+    public void push()
+    {
+        if (!this.pushing.compareAndSet(false, true))
+        {
+            log.warn("Previous push task is still running, skip this round.");
+            return;
+        }
+
+        try {
+            this.singleImapConnection.execute(this.doPush());
+        }
+        catch (MessagingException exception) {
+            log.error("Push lkml email to message queue failed.", exception);
         }
         finally {
             // (6) 翻转并发标志位
