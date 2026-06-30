@@ -26,7 +26,7 @@ public class TimeMonitorAspect
     /** 按反射出来的方法实例拼接默认的计时器名。*/
     private static String
     concatDefaultMonitorName(Method method) {
-        return method.getDeclaringClass().getSimpleName() + "." + method.getName();
+        return method.getDeclaringClass().getSimpleName() + "." + method.getName() + "()";
     }
 
     /** 记录方法入参。*/
@@ -154,14 +154,14 @@ public class TimeMonitorAspect
             if (duration > warnThreshold)
             {
                 log.warn(
-                    "Task {} took {} {}, exceeds threshold of {} {}.",
+                    "Task {} took [{}] {}, exceeds threshold of [{}] {}.",
                     monitorName, duration, unitString, warnThreshold, unitString
                 );
             }
             else
             {
                 log.info(
-                    "Task {} took {} {}.",
+                    "Task {} took [{}] {}.",
                     monitorName, duration, unitString
                 );
             }
