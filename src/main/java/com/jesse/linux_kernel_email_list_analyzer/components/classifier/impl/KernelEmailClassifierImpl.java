@@ -12,6 +12,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,6 +25,10 @@ import static java.lang.String.format;
 @RequiredArgsConstructor
 public class KernelEmailClassifierImpl implements KernelEmailClassifier
 {
+    /** 补丁回复邮件的标题前缀。*/
+    private static final
+    Set<String> REPLY_PREFIX = Set.of("RE", "Re", "re");
+
     /**
      * 对于一些通过别的服务转发的内核补丁邮件，比如：
      *
@@ -135,7 +140,7 @@ public class KernelEmailClassifierImpl implements KernelEmailClassifier
     public Path classify(String from, String subject)
     {
         // 回复邮件直接归档到 replies 目录，不解析事件类型
-        if (subject.startsWith("Re:") || subject.startsWith("re:")) {
+        if (REPLY_PREFIX.stream().anyMatch(subject::contains)) {
             return Path.of(extractFrom(from)).resolve("replies");
         }
 
