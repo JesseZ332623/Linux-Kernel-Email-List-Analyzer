@@ -30,7 +30,7 @@ public class KernelEmailClassifierImpl implements KernelEmailClassifier
     Set<String> REPLY_PREFIX = Set.of("RE", "Re", "re");
 
     /**
-     * 对于一些通过别的服务转发的内核补丁邮件，比如：
+     * 对于一些通过别的邮箱服务转发的内核补丁邮件，比如：
      *
      * <pre>
      * {@literal Wentao Liang <vulab@iscas.ac.cn> 通过“vger.kernel.org” }
@@ -38,9 +38,30 @@ public class KernelEmailClassifierImpl implements KernelEmailClassifier
      *
      * 如果拿原始的 from 直接分类的话会造成混乱，
      * 所以本正则表达式可以完整的抓取作者 + {@literal <作者邮箱>} 的信息。
+     *
+     * <h4>2026.06.30 修复</h4>
+     * 至于 LKML 中某些不守规矩的邮件，
+     * 比如 from 就是简单的 phucduc.bui@gmail.com 纯邮箱地址，
+     * 正则表达式需要为这种莽撞的情况兜底，如下所示：
+     *
+     * <pre>
+     * ^                # 从行首开始
+     * (?:              # 非捕获组，整体是 "要么匹配这个，要么匹配那个"
+     *      .*?         #   分支 A：非贪婪匹配显示名
+     *      <           #         尖括号开始
+     *        (         #         捕获组 1（尖括号里的邮箱）
+     *          [^>]+   #           尖括号内的内容
+     *        )         #         捕获组 1 结束
+     *      >           #         尖括号结束
+     *   |              #   或
+     *      (           #   分支 B：捕获组 2（纯邮箱兜底）
+     *        .+@.+     #         至少一个字符 + @ + 至少一个字符
+     *      )           #   捕获组 2 结束
+     * )                # 非捕获组结束
+     * </pre>
      */
     private static final
-    Pattern FROM_PATTERN = Pattern.compile("^(.*?<[^>]+>)");
+    Pattern FROM_PATTERN = Pattern.compile("^(?:.*?<([^>]+)>|(.+@.+))");
 
     /**
      * 提取内核补丁邮件标题开头中 [] 内的完整字符串。
@@ -121,14 +142,19 @@ public class KernelEmailClassifierImpl implements KernelEmailClassifier
         }
 
         final Matcher fromMatcher
-            = FROM_PATTERN.matcher(decodeMimeHeader(from));
+            = FROM_PATTERN.matcher(decodeMimeHeader(from).trim());
 
         if (fromMatcher.find())
         {
+            final String email
+                = Objects.nonNull(fromMatcher.group(1))
+                    ? fromMatcher.group(1)
+                    : fromMatcher.group(2);
+
+            // 剔除非法字符且把连续的空白字符都替换成 '-'
             return
-            fromMatcher.group(1).trim()
-                .replaceAll(RegexUtils.ILLEGAL_CHARACTOR_PATTERN.pattern(), "")
-                .replaceAll("\\s+", "-");
+            email.replaceAll(RegexUtils.ILLEGAL_CHARACTOR_PATTERN.pattern(), "")
+                 .replaceAll("\\s+", "-");
         }
 
         throw new
