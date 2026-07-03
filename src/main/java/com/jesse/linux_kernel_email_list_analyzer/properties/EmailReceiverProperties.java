@@ -51,4 +51,10 @@ public class EmailReceiverProperties
 
     /** 各个线程争抢 {@link jakarta.mail.Store} 实例的等待超时时间 */
     private Duration storeLockWaitTimeout;
+
+    /** 连接保活操作时间间隔 */
+    private Duration keepAliveInterval;
+
+    /** 连接保活操作线程池关闭超时时间 */
+    private Duration keepAliveShutdownWaitTimeout;
 }

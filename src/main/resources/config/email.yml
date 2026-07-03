@@ -15,13 +15,20 @@ app:
     timeout: 30000
     # 是否启用调试模式
     debug: false
+
     # 代理地址
     proxy-host: 127.0.0.1
     # 代理端口号
     proxy-port: 10808
+
     # 连接邮箱服务的用户名
     username: "zhj3191955858@gmail.com"
     # 连接邮箱服务的十六位 App 专用密码（从数据库中获取）
     # password:
+
     # 各个线程争抢 Store 实例的等待超时时间
     store-lock-wait-timeout: 10s
+    # IMAP 连接 keep-alive 保活操作时间间隔
+    keep-alive-interval: 4m
+    # 连接保活操作线程池关闭超时时间
+    keep-alive-shutdown-wait-timeout: 4s
