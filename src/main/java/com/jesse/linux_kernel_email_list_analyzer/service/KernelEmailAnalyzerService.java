@@ -2,7 +2,7 @@ package com.jesse.linux_kernel_email_list_analyzer.service;
 
 import com.jesse.linux_kernel_email_list_analyzer.components.KernelEmailAIModelAnalyzer;
 import com.jesse.linux_kernel_email_list_analyzer.components.LKMLAnalyzeReportWriter;
-import com.jesse.linux_kernel_email_list_analyzer.components.LKMLAnalyzeTemplateGanerator;
+import com.jesse.linux_kernel_email_list_analyzer.components.LKMLAnalyzeTemplateGenerator;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.AnalyzeResultTemplateData;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
 import com.jesse.linux_kernel_email_list_analyzer.response.AIModelAnswerResponse;
@@ -26,7 +26,7 @@ public class KernelEmailAnalyzerService
     KernelEmailAIModelAnalyzer kernelEmailAIModelAnalyzer;
 
     /** LKML 内核补丁邮件分析结果生成器接口。*/
-    private final LKMLAnalyzeTemplateGanerator templateGanerator;
+    private final LKMLAnalyzeTemplateGenerator templateGenerator;
 
     /** LKML 内核补丁邮件分析结果持久化器接口。*/
     private final LKMLAnalyzeReportWriter reportWriter;
@@ -50,7 +50,7 @@ public class KernelEmailAnalyzerService
 
             // (2) 生成分析报告
             final String htmlText
-                = this.templateGanerator.generate(
+                = this.templateGenerator.generate(
                     new AnalyzeResultTemplateData(kernalEmail, response)
                 );
 
