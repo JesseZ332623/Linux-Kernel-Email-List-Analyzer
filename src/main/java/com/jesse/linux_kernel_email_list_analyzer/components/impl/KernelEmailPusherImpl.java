@@ -57,7 +57,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
      * push() 操作每次循环处理一批邮件的数量，固定值无需写到配置中去
      * 确保上游的 gmail 不会因为下游无节制并发而拒绝。
      */
-    private final int PROCESS_BACTH_SIZE = 20;
+    private final int PROCESS_BATCH_SIZE = 20;
 
     /** 表示空 {@link jakarta.mail.Message} 数组的单例。*/
     private static final
@@ -150,7 +150,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
      *      Subject Re: [PATCH bpf-next v4 3/3] selftests/bpf: Add bpf_fib_lookup() VLAN flag tests
      * </pre>
      *
-     * 这种意外的丢件情况。
+     * 这种意外地丢件情况。
      */
     private String
     getPlainTextFromMimeMultipart(MimeMultipart multipart)
@@ -198,7 +198,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
             else
             {
                 // 如果这封邮件并不是纯文本邮件，
-                // 可能是邮箱服务这边可能意外的拉取了别的邮件，
+                // 可能是邮箱服务这边可能意外地拉取了别的邮件，
                 // 直接返回 null 丢弃即可
                 log.warn(
                     "Skip non-plain-text email. Content Type: {}, Subject {}",
@@ -309,15 +309,15 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
      * 下游一片片的处理，这样可以限制并发量和 OOM。
      */
     private List<List<Message>>
-    spliteMessages(final Message[] messages)
+    splitMessages(final Message[] messages)
     {
         if (Arrays.equals(messages, EMPTY_MESSAGE_ARRAY)) {
             return List.of();
         }
 
         // (1) 向上取整的计算批次数
-        final int batchs
-            = (messages.length + PROCESS_BACTH_SIZE - 1) / PROCESS_BACTH_SIZE;
+        final int batches
+            = (messages.length + PROCESS_BATCH_SIZE - 1) / PROCESS_BATCH_SIZE;
 
         final List<Message> messageList
             = Arrays.asList(messages);
@@ -327,10 +327,10 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
          * 最后收集成分片列表 List<List<Message>>。
          */
         return
-        IntStream.range(0, batchs)
+        IntStream.range(0, batches)
             .mapToObj((index) -> {
-                final int from = index * PROCESS_BACTH_SIZE;
-                final int to   = Math.min(from + PROCESS_BACTH_SIZE, messages.length);
+                final int from = index * PROCESS_BATCH_SIZE;
+                final int to   = Math.min(from + PROCESS_BATCH_SIZE, messages.length);
 
                 return messageList.subList(from, to);
             }).toList();
@@ -384,7 +384,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
 
                 // (2) 将邮件数据分片
                 final List<List<Message>> splitMessages
-                    = this.spliteMessages(messages);
+                    = this.splitMessages(messages);
 
                 for (List<Message> batch : splitMessages)
                 {
