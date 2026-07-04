@@ -25,14 +25,14 @@ import lombok.ToString;
  * }
  * </pre>
  *
- * 其中 xxx_detailds 字段是变化的，无法精确映射，就先写成 Object 类型，
+ * 其中 xxx_details 字段是变化的，无法精确映射，就先写成 Object 类型，
  * Jackson 会默认按照 {@link java.util.LinkedHashMap} 来反序列化。
  */
 @Data
 @ToString
 @EqualsAndHashCode
 @NoArgsConstructor
-public class AIModelAnserUsage
+public class AIModelAnswerUsage
 {
     /** 输入提示词消耗的 Token 数 */
     @JsonProperty("prompt_tokens")

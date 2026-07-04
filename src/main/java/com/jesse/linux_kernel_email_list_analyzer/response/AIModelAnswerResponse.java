@@ -1,7 +1,7 @@
 package com.jesse.linux_kernel_email_list_analyzer.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelAnserUsage;
+import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelAnswerUsage;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelAnswerChoice;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -70,7 +70,7 @@ public class AIModelAnswerResponse
     private List<AIModelAnswerChoice> choices;
 
     /** Token 用量统计，用于计费和分析 */
-    private AIModelAnserUsage usage;
+    private AIModelAnswerUsage usage;
 
     /** 后端环境标识，表示处理该请求的具体系统版本 / 配置，调试用 */
     @JsonProperty("system_fingerprint")

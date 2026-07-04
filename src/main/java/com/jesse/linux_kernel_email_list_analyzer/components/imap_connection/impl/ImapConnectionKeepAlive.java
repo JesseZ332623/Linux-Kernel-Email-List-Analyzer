@@ -190,7 +190,7 @@ public class ImapConnectionKeepAlive
         {
             Thread.currentThread().interrupt();
 
-            // 被中断了也应该立刻关闭防止泄漏。
+            // 如果被外部中断了，也应该立刻关闭防止泄漏。
             this.imapConnectionKeepAliveExecutor.shutdownNow();
         }
 

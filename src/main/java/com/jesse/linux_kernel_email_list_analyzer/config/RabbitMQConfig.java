@@ -117,7 +117,7 @@ public class RabbitMQConfig
      * 整个绑定关系如下所示：
      * <pre>
      *                             lkml.key
-     * (Suppplier) lkml.exchange ----------> lkml.queue (Consumer)
+     * (Supplier) lkml.exchange ----------> lkml.queue (Consumer)
      *                              |
      *                              | dead letter
      *                              |
