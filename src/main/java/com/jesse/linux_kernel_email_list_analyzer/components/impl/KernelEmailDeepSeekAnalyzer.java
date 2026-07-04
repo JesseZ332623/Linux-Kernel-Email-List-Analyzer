@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class KernelEmailDeepSeeklAnalyzer implements KernelEmailAIModelAnalyzer
+public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
 {
     /** DeepSeek 模型对话属性配置类。*/
     private final DeepSeekChatProperties deepSeekChatProperties;
