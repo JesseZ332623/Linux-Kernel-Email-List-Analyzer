@@ -49,7 +49,7 @@ public class SingleImapConnectionImpl implements SingleImapConnection
     }
 
     /**
-     * {@link MessagingException} 是一个非常宽泛的异常，
+     * {@link MessagingException} 是一个非常宽泛地异常，
      * 我们需要进一步判断是否值得重试。
      */
     private boolean
