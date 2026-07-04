@@ -1,6 +1,6 @@
 package com.jesse.linux_kernel_email_list_analyzer.components.impl;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.LKMLAnalyzeTemplateGanerator;
+import com.jesse.linux_kernel_email_list_analyzer.components.LKMLAnalyzeTemplateGenerator;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.AnalyzeResultTemplateData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,7 @@ import java.util.Locale;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class LKMLAnalyzeTemplateGaneratorImpl implements LKMLAnalyzeTemplateGanerator
+public class LKMLAnalyzeTemplateGeneratorImpl implements LKMLAnalyzeTemplateGenerator
 {
     /** 模板名常量。*/
     private static final
