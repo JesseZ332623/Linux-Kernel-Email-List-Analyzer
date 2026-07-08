@@ -126,7 +126,7 @@ public class RabbitMQConfig
      * </pre>
      *
      * 还需要说明的是，方法中虽然直接调用了 this.lkmlQueue() 这样的方法，
-     * 但是在 @Configuration + @Bean 的组合下，Soring 会拦截这个调用，
+     * 但是在 @Configuration + @Bean 的组合下，Spring 会拦截这个调用，
      * 先去容器里检查有没有已经构造好的实例，有则直接返回，没有则创建。
      */
     @Bean
