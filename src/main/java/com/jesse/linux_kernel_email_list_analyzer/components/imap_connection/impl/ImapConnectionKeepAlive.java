@@ -2,25 +2,17 @@ package com.jesse.linux_kernel_email_list_analyzer.components.imap_connection.im
 
 import com.jesse.linux_kernel_email_list_analyzer.components.imap_connection.SingleImapConnection;
 import com.jesse.linux_kernel_email_list_analyzer.properties.EmailReceiverProperties;
+import com.jesse.linux_kernel_email_list_analyzer.utils.ImapConnectionKeepAliveUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import jakarta.mail.Folder;
-import jakarta.mail.MessagingException;
-import jakarta.mail.Store;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.angus.mail.iap.Protocol;
-import org.eclipse.angus.mail.iap.ProtocolException;
-import org.eclipse.angus.mail.iap.Response;
-import org.eclipse.angus.mail.imap.IMAPFolder;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /** IMAP 连接实例 keep-alive 定期保活组件。*/
 @Slf4j
@@ -42,62 +34,6 @@ public class ImapConnectionKeepAlive
     /** 连接保活任务是否正在执行（读多写少，不需要使用原子类型）。*/
     private volatile boolean running = true;
 
-    /** 往邮箱服务发送 NOOP 命令并处理响应操作的实现。*/
-    private static Object
-    noop(Protocol protocol) throws ProtocolException
-    {
-        final Response[] responses
-            = protocol.command("NOOP", null);
-
-        /*
-         * 通知 jakarta.mail 内部注册的的 ResponseHandler，比如：
-         *
-         * 监听新邮件到达（EXISTS、RECENT 等 untagged 响应）
-         *
-         * 处理 EXPUNGE（邮件被删除）
-         *
-         * IDLE 模式下的消息推送
-         *
-         * 其他内部状态更新
-         */
-        protocol.notifyResponseHandlers(responses);
-
-        // 处理末尾的结果响应（成功、失败、结束等）
-        protocol.handleResult(responses[responses.length - 1]);
-
-        // 拼接响应消息字符串
-        return
-        Arrays.stream(responses)
-              .map(Response::toString)
-              .collect(Collectors.joining(" | "));
-    }
-
-    /** 邮箱服务连接保活操作的实现。*/
-    private static Object
-    keepAlive(Store store) throws MessagingException
-    {
-        final Folder folder = store.getFolder("INBOX");
-
-        if (folder instanceof IMAPFolder imapFolder)
-        {
-            log.debug(
-                "IMAP NOOP keep-alive execute success. (Response message: {})",
-                imapFolder.doCommand(ImapConnectionKeepAlive::noop)
-            );
-        }
-        else
-        {
-            // 如果没有使用 IMAPFolder，
-            // 可以用一个轻量级操作代替进行连接保活。
-            log.debug(
-                "IMAP NOOP keep-alive execute success. (Folder message count: {})",
-                folder.getMessageCount()
-            );
-        }
-
-        return null;
-    }
-
     /** 检查IMAP Connection 连接保活专用单线程执行器是否被意外关闭。*/
     private boolean isExecutorShutdown()
     {
@@ -115,7 +51,7 @@ public class ImapConnectionKeepAlive
         try
         {
             this.singleImapConnection
-                .execute(ImapConnectionKeepAlive::keepAlive);
+                .execute(ImapConnectionKeepAliveUtils::keepAlive);
         }
         catch (Exception exception)
         {
