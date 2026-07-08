@@ -57,7 +57,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
      * push() 操作每次循环处理一批邮件的数量，固定值无需写到配置中去
      * 确保上游的 gmail 不会因为下游无节制并发而拒绝。
      */
-    private final int PROCESS_BATCH_SIZE = 20;
+    private final int PROCESS_BATCH_SIZE = 50;
 
     /** 表示空 {@link jakarta.mail.Message} 数组的单例。*/
     private static final
@@ -290,11 +290,6 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
 
             log.info("Pull and filter {} latest unread emails.", messages.length);
 
-            // (3) 批量标记已读并删除
-            if (messages.length > 0) {
-                inbox.setFlags(messages, DEFAULT_FLAGS, true);
-            }
-
             return messages;
         }
         catch (Exception exception)
@@ -386,9 +381,12 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
                 final List<List<Message>> splitMessages
                     = this.splitMessages(messages);
 
-                for (List<Message> batch : splitMessages)
+                for (final List<Message> batch : splitMessages)
                 {
-                    // (3) 一边解析一边往 MQ 推送邮件，
+                    // (3) 标记这一片的邮件为 “阅后即焚”。
+                    inbox.setFlags(batch.toArray(Message[]::new), DEFAULT_FLAGS, true);
+
+                    // (4) 一边解析一边往 MQ 推送邮件，
                     // Rabbit MQ 与服务建立的是 AMQP 长连接，目前的体量不需要批量操作。
                     final List<CompletableFuture<PlainTextEmail>> pushFutures
                         = batch.stream()
@@ -399,7 +397,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
                                     .thenApply(this::pushToRabbitMQ)
                             ).toList();
 
-                    // (4) 等待完成并统计这一个批次的成功数量
+                    // (5) 等待完成并统计这一个批次的成功数量
                     final long successCount
                         = pushFutures.stream()
                             .map(CompletableFuture::join)
@@ -415,7 +413,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
                 {
                     if (Objects.nonNull(inbox) && inbox.isOpen())
                     {
-                        // (5) 关闭收件箱列表，
+                        // (6) 关闭收件箱列表，
                         // expunges 值为 true 意味着全部删除标记为 DELETED 的邮件。
                         inbox.close(true);
                     }
@@ -455,7 +453,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
             log.error("Push lkml email to message queue failed.", exception);
         }
         finally {
-            // (6) 翻转并发标志位
+            // 翻转并发标志位
             this.pushing.set(false);
         }
     }
