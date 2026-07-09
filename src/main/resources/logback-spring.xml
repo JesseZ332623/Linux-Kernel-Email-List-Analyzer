@@ -138,6 +138,10 @@
             </encoder>
         </appender>
 
+        <!--
+            非业务模块的日志等级，
+            只分发 INFO 级别以上的日志给下列引用的追加器
+         -->
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="ERROR_FILE"/>
@@ -146,9 +150,12 @@
         </root>
 
         <!-- 业务模块日志等级 -->
-        <logger name="com.jesse.indicator_receiver" level="DEBUG" additivity="false">
+         <logger name="com.jesse" level="DEBUG" additivity="false">
             <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="DEBUG_FILE"/> <!-- 引用 DEBUG_FILE -->
+            <appender-ref ref="DEBUG_FILE"/>
+            <appender-ref ref="INFO_FILE"/>
+            <appender-ref ref="WARN_FILE"/>
+            <appender-ref ref="ERROR_FILE"/>
         </logger>
     </springProfile>
 
@@ -182,7 +189,7 @@
         </root>
 
         <!-- 业务模块日志等级 -->
-        <logger name="com.jesse.indicator_receiver" level="INFO" additivity="false">
+        <logger name="com.jesse" level="INFO" additivity="false">
             <appender-ref ref="ASYNC_ERROR"/>
             <appender-ref ref="ASYNC_WARN"/>
             <appender-ref ref="INFO_FILE"/>
@@ -203,12 +210,4 @@
             <appender-ref ref="ERROR_FILE"/>
         </root>
     </springProfile>
-
-    <!-- ========== 第三方库日志降级（所有环境通用） ========== -->
-    <logger name="io.projectreactor.rabbitmq" level="WARN"/>
-    <logger name="io.r2dbc" level="WARN"/>
-    <logger name="org.springframework" level="INFO"/>
-    <logger name="org.springframework.data.r2dbc" level="WARN"/>
-    <logger name="org.springframework.test" level="WARN"/>
-    <logger name="org.hibernate" level="WARN"/>
 </configuration>
