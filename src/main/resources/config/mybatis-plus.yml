@@ -1,0 +1,5 @@
+# Mybatis-Plus 熟悉配置
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl

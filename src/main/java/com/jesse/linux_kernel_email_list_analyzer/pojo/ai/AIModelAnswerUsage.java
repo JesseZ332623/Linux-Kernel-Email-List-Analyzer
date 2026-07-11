@@ -6,6 +6,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.util.Map;
+
 /**
  * AI 模型一轮对话下消耗的 Token 明细记录类，JSON 示例如下：
  *
@@ -25,7 +27,7 @@ import lombok.ToString;
  * }
  * </pre>
  *
- * 其中 xxx_details 字段是变化的，无法精确映射，就先写成 Object 类型，
+ * 其中 xxx_details 字段是变化的，无法精确映射，
  * Jackson 会默认按照 {@link java.util.LinkedHashMap} 来反序列化。
  */
 @Data
@@ -46,13 +48,13 @@ public class AIModelAnswerUsage
     @JsonProperty("total_tokens")
     private Long totalTokens;
 
-    /** 输入 Token 的详细构成（暂时用不到）*/
+    /** 输入 Token 的详细构成，不固定 */
     @JsonProperty("prompt_tokens_details")
-    private Object promptTokensDetails;
+    private Map<String, Object> promptTokensDetails;
 
-    /** 输出 Token 的详细构成（暂时用不到）*/
+    /** 输出 Token 的详细构成，不固定 */
     @JsonProperty("completion_tokens_details")
-    private Object completionTokensDetails;
+    private Map<String, Object> completionTokensDetails;
 
     @JsonProperty("prompt_cache_hit_tokens")
     private Long promptCacheHitTokens;

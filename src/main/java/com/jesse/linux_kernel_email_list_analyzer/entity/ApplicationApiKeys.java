@@ -1,17 +1,17 @@
 package com.jesse.linux_kernel_email_list_analyzer.entity;
 
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
 
 /** 第三方应用访问 API Keys 表实体类。*/
 @Data
 @NoArgsConstructor
-@Table(name = "application_api_keys")
+@TableName("application_api_keys")
 public class ApplicationApiKeys
 {
-    @Id
+    @TableId
     private Long id;
 
     private String applicationName;
