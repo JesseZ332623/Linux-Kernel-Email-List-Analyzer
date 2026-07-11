@@ -1,3 +1,5 @@
+# 服务主配置类
+
 server:
   address: 0.0.0.0
   port: 26543
@@ -28,3 +30,5 @@ spring:
       - classpath:config/rabbitmq.yml
       - classpath:config/deepseek-chat.yml
       - classpath:config/report-persistence.yml
+      - classpath:config/global-id-consumer.yml
+      - classpath:config/mybatis-plus.yml
