@@ -3,6 +3,7 @@ package com.jesse.linux_kernel_email_list_analyzer.response;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelAnswerUsage;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelAnswerChoice;
+import com.jesse.linux_kernel_email_list_analyzer.response.base.AIModelAnswerBaseResponse;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -50,13 +51,10 @@ import java.util.List;
  */
 @Data
 @ToString
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class AIModelAnswerResponse
+public class AIModelAnswerResponse extends AIModelAnswerBaseResponse
 {
-    /** 本次请求的唯一标识符，用于追踪和问题排查 */
-    private String id;
-
     /** 对象类型，固定为 "chat.completion"，表示这是一个完整的对话生成结果 */
     private String object;
 
