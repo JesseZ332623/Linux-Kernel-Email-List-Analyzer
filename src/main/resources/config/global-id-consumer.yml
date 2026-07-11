@@ -1,0 +1,14 @@
+# 全局 ID 消费机属性配置
+
+app:
+  id-consumer:
+    global-id-key: "ids:buffer:global"
+    block-timeout: 1s
+    retries: 3
+    start-backoff: 100ms
+    max-backoff: 500ms
+    directory-urls:
+      # 直接生成一条 ID 的服务端点
+      next: http://192.168.31.104:65533/api/id_allocator/next
+      # 直接生成一批 ID 的服务端点
+      next-batch: http://192.168.31.104:65533/api/id_allocator/next-batch
