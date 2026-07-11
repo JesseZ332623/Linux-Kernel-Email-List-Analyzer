@@ -6,7 +6,7 @@ app:
     # 模型名称
     model-name: deepseek-v4-pro
     # 端点访问身份凭证名
-    authorization-name: deepseek-lkml-analyer
+    authorization-name: deepseek-lkml-analyzer
     # 是否开启推理模式
     thinking: enabled
     # 模型的推理强度
