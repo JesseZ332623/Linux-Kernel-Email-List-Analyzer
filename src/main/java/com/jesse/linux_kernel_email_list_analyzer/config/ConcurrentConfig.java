@@ -32,6 +32,22 @@ public class ConcurrentConfig
         Executors.newThreadPerTaskExecutor(threadFactory);
     }
 
+    /** OK HTTP 客户端专用的响应回调虚拟线程执行器。*/
+    @Bean(
+        name          = "ok-http-client-dispatcher-executor",
+        destroyMethod = "shutdown"
+    )
+    public ExecutorService okHttpClientDispatcherExecutor()
+    {
+        final ThreadFactory threadFactory
+            = Thread.ofVirtual()
+                    .name("ok-http-client-", 0)
+                    .factory();
+
+        return
+        Executors.newThreadPerTaskExecutor(threadFactory);
+    }
+
     /** IMAP Connection 连接保活专用单线程执行器。*/
     @Bean(name = "imap-connection-keepalive-executor")
     public ScheduledExecutorService imapConnectionKeepAliveExecutor()
