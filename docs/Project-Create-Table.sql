@@ -90,7 +90,7 @@ CREATE TABLE `linux_kernal_email` (
   `text_content`    MEDIUMTEXT   COMMENT '邮件正文（纯文本）',
   `create_at`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),
-  KEY `idx_task_id` (`task_id`),      USING BTREE
+  KEY `idx_task_id` (`task_id`)       USING BTREE,
   KEY `idx_message_id` (`message_id`) USING BTREE
 )
 ENGINE=InnoDB
