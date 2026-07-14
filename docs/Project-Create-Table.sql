@@ -78,3 +78,24 @@ ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4
 COLLATE=utf8mb4_0900_ai_ci
 COMMENT='AI 模型 token 资费消耗每日汇总表';
+
+CREATE TABLE `linux_kernal_email` (
+  `id`              BIGINT       NOT NULL,
+  `task_id`         CHAR(36)     NOT NULL COMMENT '本次大模型请求的唯一标识符，用于追踪和问题排查',
+  `message_id`      VARCHAR(128) NOT NULL COMMENT 'RFC 822 消息 ID',
+  `from`            VARCHAR(64)  NOT NULL COMMENT '邮件发送人',
+  `subject`         VARCHAR(256) NOT NULL COMMENT '邮件标题 ',
+  `utc_time`        VARCHAR(64)  NOT NULL COMMENT '邮件发送时间（UTC 时区）',
+  `kernel_time`     VARCHAR(64)  NOT NULL COMMENT '邮件发送时间（LKML 常用时区）',
+  `text_content`    MEDIUMTEXT   COMMENT '邮件正文（纯文本）',
+  `create_at`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_task_id` (`task_id`),      USING BTREE
+  KEY `idx_message_id` (`message_id`) USING BTREE
+)
+ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_0900_ai_ci
+ROW_FORMAT=COMPRESSED
+KEY_BLOCK_SIZE=8
+COMMENT='内核邮件数据表';
