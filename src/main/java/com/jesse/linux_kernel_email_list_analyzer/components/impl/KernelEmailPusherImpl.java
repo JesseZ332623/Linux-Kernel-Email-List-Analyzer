@@ -106,7 +106,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
     /** 构造默认的邮件数据预取配置。*/
     private static FetchProfile defaultFetchProfile()
     {
-        FetchProfile fetchProfile = new FetchProfile();
+        final FetchProfile fetchProfile = new FetchProfile();
 
         /*
          * ENVELOPE 预取配置会在 Folder::fetch() 方法
@@ -221,7 +221,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
 
             plainTextEmail.setSubject(message.getSubject());
             plainTextEmail.setUtcTime(sentInstant.atZone(UTC).format(ISO_DATE_TIME));
-            plainTextEmail.setKernalTime(sentInstant.atZone(KERNEL_TIMEZONE).format(KERNEL_FORMAT));
+            plainTextEmail.setKernelTime(sentInstant.atZone(KERNEL_TIMEZONE).format(KERNEL_FORMAT));
 
             log.info("Parse kernel email (message-id = {}) complete.", plainTextEmail.getMessageId());
 
