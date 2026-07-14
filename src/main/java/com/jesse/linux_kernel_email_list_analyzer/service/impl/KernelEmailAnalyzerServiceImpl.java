@@ -55,7 +55,7 @@ public class KernelEmailAnalyzerServiceImpl implements KernelEmailAnalyzerServic
                 = this.kernelEmailAIModelAnalyzer.doAnalyze(kernalEmail);
 
             // (2) 审计本次分析的信息
-            this.aiModelAnswerAuditService.save(response);
+            this.aiModelAnswerAuditService.save(kernalEmail, response);
 
             // (3) 生成分析报告
             final String htmlText
