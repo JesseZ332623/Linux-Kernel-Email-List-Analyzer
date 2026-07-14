@@ -54,7 +54,7 @@ import java.util.List;
 @NoArgsConstructor
 public class AIModelAnswerSSEResponse extends AIModelAnswerBaseResponse
 {
-    /** 对象类型，固定为 "chat.completion"，表示这是一个完整的对话生成结果 */
+    /** 对象类型，固定为 "chat.completion.chunk"，表示这是一个完整的对话生成结果 */
     private String object;
 
     /** Unix 时间戳，表示响应的生成时间 */
