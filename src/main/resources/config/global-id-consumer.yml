@@ -9,6 +9,6 @@ app:
     max-backoff: 500ms
     directory-urls:
       # 直接生成一条 ID 的服务端点
-      next: http://192.168.31.104:65533/api/id_allocator/next
+      next: http://localhost:65533/api/id_allocator/next
       # 直接生成一批 ID 的服务端点
-      next-batch: http://192.168.31.104:65533/api/id_allocator/next-batch
+      next-batch: http://localhost:65533/api/id_allocator/next-batch
