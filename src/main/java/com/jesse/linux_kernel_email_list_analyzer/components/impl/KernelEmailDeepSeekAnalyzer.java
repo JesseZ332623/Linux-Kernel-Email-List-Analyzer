@@ -59,12 +59,12 @@ public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
                       .getContentAsString(StandardCharsets.UTF_8);
 
             return new
-                AIModelChatMessage(
+            AIModelChatMessage(
                 "user",
                 userRolePromptPattern.formatted(
                     kernalEmail.getMessageId(),
                     kernalEmail.getFrom(),
-                    kernalEmail.getKernalTime(),
+                    kernalEmail.getKernelTime(),
                     kernalEmail.getSubject(),
                     kernalEmail.getTextContent()
                 )

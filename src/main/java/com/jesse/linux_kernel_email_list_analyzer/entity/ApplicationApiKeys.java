@@ -1,5 +1,6 @@
 package com.jesse.linux_kernel_email_list_analyzer.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
 @TableName("application_api_keys")
 public class ApplicationApiKeys
 {
-    @TableId
+    @TableId(type = IdType.INPUT)
     private Long id;
 
     private String applicationName;

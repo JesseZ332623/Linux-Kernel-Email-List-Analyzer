@@ -39,11 +39,11 @@ public class PlainTextEmail
     /** 邮件标题 */
     private String subject;
 
-    /** 邮件发送时间（UTC 时区） */
+    /** 邮件发送时间（UTC 时区）*/
     private String utcTime;
 
-    /** 邮件发送时间（LKML 常用时区） */
-    private String kernalTime;
+    /** 邮件发送时间（LKML 常用时区）*/
+    private String kernelTime;
 
     /** 邮件正文（纯文本）*/
     private String textContent;
