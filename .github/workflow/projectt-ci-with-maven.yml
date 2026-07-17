@@ -1,0 +1,44 @@
+name: Project CI With Maven
+
+# 在对 develop 和 main 分支
+# 发起推送或者 PS 的时候执行本 CI 脚本
+on:
+  push:
+    branches: [ "develop", "main" ]
+  pull_request:
+    branches: [ "develop", "main" ]
+
+# CI 作业配置
+jobs:
+  build:
+    # 在最新的 Linux Ubuntu 发行版运行
+    runs-on: ubuntu-latest
+
+    steps:
+      # Github 官方的代码检出 action
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # 0 表示拉取完整历史（用于生成版本号等）
+          submodules: true        # 如果有子模块
+
+      # 下载 JDK
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'          # 自动缓存 Maven 依赖，加速后续构建
+
+      # 用 Maven 构建想项目
+      - name: Build with Maven
+        run: mvn -B clean package --file pom.xml -DskipTests   # 先不跑测试，加快反馈
+
+      # 在往 main 分支提交、合并的时候，
+      # 将打包好的 JAR 包上传
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: linux-kernel-email-analyzer-jar
+          path: target/*.jar
+          retention-days: 7
