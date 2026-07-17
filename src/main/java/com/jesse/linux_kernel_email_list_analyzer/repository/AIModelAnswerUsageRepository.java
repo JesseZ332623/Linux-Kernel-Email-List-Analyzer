@@ -34,13 +34,26 @@ public interface AIModelAnswerUsageRepository
     AIModelAnswerUsageDTO
     getUsageByTaskId(@Param("taskId") String taskId);
 
-    /** 按模型分组，汇总一天内所有模型的 Token 消耗明细。*/
+    /**
+     * 按模型分组，汇总一天内所有模型的 Token 消耗明细。
+     *
+     * <h3>2026.07.17 新增</h3>
+     * DeepSeek 模型 7 月中旬开始采用峰谷策略对 Token 进行计费，
+     * 峰期为 [09:00, 12:00) 和 [14：00, 18:00)，在此期间双倍收费。
+     * 所以需要判断每个明细的时间是否在峰期区间内，再按此分组。
+     */
     @Select("""
         SELECT
             audit.model                               AS model,
             SUM(token_usage.prompt_cache_hit_tokens)  AS promptCacheHitTokens,
             SUM(token_usage.prompt_cache_miss_tokens) AS promptCacheMissTokens,
-            SUM(token_usage.completion_tokens)        AS completionTokens
+            SUM(token_usage.completion_tokens)        AS completionTokens,
+            CASE WHEN
+                HOUR(audit.create_at) >= 9 AND HOUR(audit.create_at) < 12
+                OR HOUR(audit.create_at) >= 14 AND HOUR(audit.create_at) < 18
+            THEN TRUE
+            ELSE FALSE
+            END AS isPeak
         FROM
             ai_model_answer_audit AS audit
         INNER JOIN
@@ -50,7 +63,8 @@ public interface AIModelAnswerUsageRepository
         WHERE
             audit.create_at BETWEEN #{startTime} AND #{endTime}
         GROUP BY
-           audit.model
+           audit.model,
+           isPeak
     """)
     List<AIModelAnswerUsageDTO> getDailyUsageGroupByModel(
         @Param("startTime")
