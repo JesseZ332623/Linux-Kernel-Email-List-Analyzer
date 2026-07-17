@@ -122,6 +122,7 @@ public class SingleImapConnectionImpl implements SingleImapConnection
             // (1) 等待锁
             isLocked = this.lock.tryLock(waitSeconds, TimeUnit.SECONDS);
 
+            // 规定时间内拿不到锁直接抛异常
             if (!isLocked)
             {
                 throw new MessagingException(
@@ -129,33 +130,40 @@ public class SingleImapConnectionImpl implements SingleImapConnection
                 );
             }
 
+            // 线程拿到锁后先检查自己的中断状态，
+            // 如果自己已经被外部中断了，则直接抛异常。
+            if (Thread.currentThread().isInterrupted()) {
+                throw new MessagingException("Interrupted before executing operation.");
+            }
+
             // (2) 在锁内确保连接可用
             this.ensureConnected();
 
-            try {
-                // (3) 执行业务逻辑
-                return operation.execute(this.store);
+            // (3) 执行业务逻辑
+            return operation.execute(this.store);
+        }
+        catch (MessagingException exception)
+        {
+            if (Thread.currentThread().isInterrupted()) {
+                Thread.currentThread().interrupt();
             }
-            catch (MessagingException exception)
+
+            // 如果执行业务逻辑时连接意外关闭，重连再次执行
+            if (this.isRetryException(exception))
             {
-                // 如果执行业务逻辑时连接意外关闭，重连再次执行
-                if (this.isRetryException(exception))
-                {
-                    log.warn(
-                        "Connection lost during operation, attempting reconnect.",
-                        exception
-                    );
+                log.warn(
+                    "Connection lost during operation, attempting reconnect.",
+                    exception
+                );
 
-                    this.store = null;
-                    this.ensureConnected();
+                this.store = null;
+                this.ensureConnected();
 
-                    return operation.execute(this.store);  // 重试一次
-                }
-
-                // 反之向外传递异常
-                throw exception;
+                return operation.execute(this.store);  // 重试一次
             }
 
+            // 反之向外传递异常
+            throw exception;
         }
         catch (InterruptedException exception)
         {
