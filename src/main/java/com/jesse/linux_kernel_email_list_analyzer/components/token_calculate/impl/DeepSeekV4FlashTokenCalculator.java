@@ -42,20 +42,24 @@ public class DeepSeekV4FlashTokenCalculator implements ModelTokenCalculator
     {
         final BigDecimal promptCacheHitTokens
             = BigDecimal.valueOf(modelAnswerUsage.getPromptCacheHitTokens())
-                .divide(ONE_MILLION, PRCESION, RoundingMode.HALF_UP);
+            .divide(ONE_MILLION, PRCESION, RoundingMode.HALF_UP);
 
         final BigDecimal promptCacheMissTokens
             = BigDecimal.valueOf(modelAnswerUsage.getPromptCacheMissTokens())
-                .divide(ONE_MILLION, PRCESION, RoundingMode.HALF_UP);
+            .divide(ONE_MILLION, PRCESION, RoundingMode.HALF_UP);
 
         final BigDecimal completionTokens
             = BigDecimal.valueOf(modelAnswerUsage.getCompletionTokens())
-                .divide(ONE_MILLION, PRCESION, RoundingMode.HALF_UP);
+            .divide(ONE_MILLION, PRCESION, RoundingMode.HALF_UP);
+
+        final BigDecimal standardPrice
+            = promptCacheHitTokens.multiply(PROMPT_CACHE_HIT_PRICE)
+            .add(promptCacheMissTokens.multiply(PROMPT_CACHE_MISS_PRICE))
+            .add(completionTokens.multiply(COMPLETION_PRICE));
 
         return
-        promptCacheHitTokens.multiply(PROMPT_CACHE_HIT_PRICE)
-            .add(promptCacheMissTokens.multiply(PROMPT_CACHE_MISS_PRICE))
-            .add(completionTokens.multiply(COMPLETION_PRICE))
-            .stripTrailingZeros();
+        (modelAnswerUsage.getIsPeak())
+            ? standardPrice.multiply(BigDecimal.TWO).stripTrailingZeros()
+            : standardPrice.stripTrailingZeros();
     }
 }
