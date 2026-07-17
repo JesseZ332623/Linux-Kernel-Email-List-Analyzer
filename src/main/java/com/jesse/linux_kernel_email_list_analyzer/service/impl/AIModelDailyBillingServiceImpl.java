@@ -7,6 +7,7 @@ import com.jesse.linux_kernel_email_list_analyzer.entity.AIModelDailyBillingEnti
 import com.jesse.linux_kernel_email_list_analyzer.repository.AIModelAnswerUsageRepository;
 import com.jesse.linux_kernel_email_list_analyzer.repository.AIModelDailyBillingRepository;
 import com.jesse.linux_kernel_email_list_analyzer.service.AIModelDailyBillingService;
+import com.jesse.linux_kernel_email_list_analyzer.utils.ZoneUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,10 +19,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /** AI 模型 token 资费消耗每日汇总表服务类实现。*/
 @Slf4j
@@ -29,13 +30,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 public class AIModelDailyBillingServiceImpl implements AIModelDailyBillingService
 {
-    /** 默认时区 */
-    private static final
-    ZoneId DEFAULT_ZONE = ZoneId.of("Asia/Shanghai");
-
     /** 默认模型名称（如果查询不到 Token 资费计算器就按这个兜底）*/
     private static final
-    String DEFAULT_MODEL = "deepseek-v4-flash";
+    String DEFAULT_MODEL_NAME = "deepseek-v4-flash";
 
     /** 全局 ID 消费机接口。*/
     private final GlobalIdConsumer globalIdConsumer;
@@ -57,7 +54,67 @@ public class AIModelDailyBillingServiceImpl implements AIModelDailyBillingServic
     private final
     AtomicBoolean saving = new AtomicBoolean(false);
 
-    /** 明天凌晨 4 点自动保存每天所有模型 token 资费消耗汇总数据。*/
+    /** 获取大模型对应的 Token 资费计算器实例。*/
+    private ModelTokenCalculator
+    selectCalculator(String modelName)
+    {
+        if (!this.modelTokenCalculatorMap.containsKey(modelName))
+        {
+            log.warn(
+                "Model {} specialized token calculator not found." +
+                "Charged according to {} standard, please make up for it in a timely manner.",
+                modelName, DEFAULT_MODEL_NAME
+            );
+        }
+
+        return
+        this.modelTokenCalculatorMap
+            .getOrDefault(
+                modelName,
+                this.modelTokenCalculatorMap.get(DEFAULT_MODEL_NAME)
+            );
+    }
+
+    /** 组装 Token 消耗与资费汇总实体。*/
+    private AIModelDailyBillingEntity makeDailyBilling(
+        final LocalDate         yesterday,
+        final String            modelName,
+        final BigDecimal        costRmb,
+        final List<AIModelAnswerUsageDTO> dailyUsages
+    )
+    {
+        final AIModelDailyBillingEntity dailyBilling
+            = new AIModelDailyBillingEntity();
+
+        dailyBilling.setId(this.globalIdConsumer.nextId());
+        dailyBilling.setBillingDate(yesterday);
+        dailyBilling.setModelName(modelName);
+
+        dailyBilling.setTotalPromptCacheHitTokens(
+            dailyUsages.stream()
+                .mapToLong(AIModelAnswerUsageDTO::getPromptCacheHitTokens)
+                .sum()
+        );
+
+        dailyBilling.setTotalPromptCacheMissTokens(
+            dailyUsages.stream()
+                .mapToLong(AIModelAnswerUsageDTO::getPromptCacheMissTokens)
+                .sum()
+        );
+
+        dailyBilling.setTotalCompletionTokens(
+            dailyUsages.stream()
+                .mapToLong(AIModelAnswerUsageDTO::getCompletionTokens)
+                .sum()
+        );
+
+        dailyBilling.setTotalCostRmb(costRmb);
+        dailyBilling.setCreateAt(LocalDateTime.now(ZoneUtils.LOCAL_TIMEZONE));
+
+        return dailyBilling;
+    }
+
+    /** 每天凌晨 4 点自动保存每天所有模型 token 资费消耗汇总数据。*/
     @Scheduled(cron = "0 0 4 * * ?")
     public void autoSave()
     {
@@ -83,58 +140,42 @@ public class AIModelDailyBillingServiceImpl implements AIModelDailyBillingServic
         }
 
         final LocalDate yesterday
-            = LocalDate.now(DEFAULT_ZONE).minusDays(1);
+            = LocalDate.now(ZoneUtils.LOCAL_TIMEZONE).minusDays(1);
 
         final LocalDateTime startOfDay = yesterday.atStartOfDay();
         final LocalDateTime endOfDay   = yesterday.atTime(LocalTime.MAX);
 
         try
         {
-            // (1) 查询昨天一整天不同模型总共的 Token 消耗明细
-            final List<AIModelAnswerUsageDTO> modelDailyUsages
+            // (1) 查询昨天一整天不同模型总共的 Token 消耗明细，
+            // 再按照 model 分组成 Map<String, List<AIModelAnswerUsageDTO>>
+            final Map<String, List<AIModelAnswerUsageDTO>> modelDailyUsages
                 = this.aiModelAnswerUsageRepository
-                      .getDailyUsageGroupByModel(startOfDay, endOfDay);
+                      .getDailyUsageGroupByModel(startOfDay, endOfDay)
+                      .stream()
+                      .collect(Collectors.groupingBy(AIModelAnswerUsageDTO::getModel));
 
-            for (AIModelAnswerUsageDTO modelDailyUsage : modelDailyUsages)
+            for (var modelDailyUsage : modelDailyUsages.entrySet())
             {
-                final String modelName
-                    = modelDailyUsage.getModel();
+                final String modelName                        = modelDailyUsage.getKey();
+                final List<AIModelAnswerUsageDTO> dailyUsages = modelDailyUsage.getValue();
 
                 // (2) 获取大模型对应的 Token 资费计算器实例
                 //（查不到就按 DEFAULT_MODEL 兜底并告警）
                 final ModelTokenCalculator calculator
-                    = this.modelTokenCalculatorMap
-                    .getOrDefault(
-                        modelName,
-                        this.modelTokenCalculatorMap.get(DEFAULT_MODEL)
-                    );
-
-                if (!this.modelTokenCalculatorMap.containsKey(modelName))
-                {
-                    log.warn(
-                        "Model {} specialized token calculator not found." +
-                        "Charged according to {} standard, please make up for it in a timely manner.",
-                        modelName, DEFAULT_MODEL
-                    );
-                }
+                    = this.selectCalculator(modelName);
 
                 // (3) 计算该模型昨日总共的 Token 资费消耗
                 final BigDecimal costRmb
-                    = calculator.calculate(modelDailyUsage);
+                    = dailyUsages.stream()
+                        .map(calculator::calculate)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+                // (4) 组装 Token 消耗与资费汇总实体
                 final AIModelDailyBillingEntity dailyBilling
-                    = new AIModelDailyBillingEntity();
+                    = this.makeDailyBilling(yesterday, modelName, costRmb, dailyUsages);
 
-                dailyBilling.setId(globalIdConsumer.nextId());
-                dailyBilling.setBillingDate(yesterday);
-                dailyBilling.setModelName(modelName);
-                dailyBilling.setTotalPromptCacheHitTokens(modelDailyUsage.getPromptCacheHitTokens());
-                dailyBilling.setTotalPromptCacheMissTokens(modelDailyUsage.getPromptCacheMissTokens());
-                dailyBilling.setTotalCompletionTokens(modelDailyUsage.getCompletionTokens());
-                dailyBilling.setTotalCostRmb(costRmb);
-                dailyBilling.setCreateAt(LocalDateTime.now(DEFAULT_ZONE));
-
-                // (4) 保存昨日的 Token 消耗与资费汇总数据
+                // (5) 保存昨日的 Token 消耗与资费汇总数据
                 this.aiModelDailyBillingRepository.upsertBilling(dailyBilling);
 
                 log.info(

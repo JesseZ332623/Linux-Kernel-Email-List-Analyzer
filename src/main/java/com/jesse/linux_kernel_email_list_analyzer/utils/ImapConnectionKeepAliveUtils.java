@@ -44,9 +44,9 @@ final public class ImapConnectionKeepAliveUtils
 
         // 拼接响应消息字符串
         return
-            Arrays.stream(responses)
-                .map(Response::toString)
-                .collect(Collectors.joining(" | "));
+        Arrays.stream(responses)
+              .map(Response::toString)
+              .collect(Collectors.joining(" | "));
     }
 
     /** 邮箱服务连接保活操作的实现。*/

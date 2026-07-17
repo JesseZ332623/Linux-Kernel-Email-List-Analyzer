@@ -2,7 +2,7 @@ package com.jesse.linux_kernel_email_list_analyzer.dto;
 
 import lombok.*;
 
-/** 一次大模型请求所消耗的 Token 明细 DTO，用于下游的资费计算。*/
+/** 大模型请求所消耗的 Token 明细 DTO，用于下游的资费计算。*/
 @Data
 @ToString
 @EqualsAndHashCode
@@ -20,4 +20,7 @@ public class AIModelAnswerUsageDTO
 
     /** 输出的 Token 数 */
     private Long completionTokens;
+
+    /** 是否为峰期 Token 消耗的汇总 */
+    private Boolean isPeak;
 }

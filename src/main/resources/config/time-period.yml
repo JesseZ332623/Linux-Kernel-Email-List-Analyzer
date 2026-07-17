@@ -1,0 +1,13 @@
+# 项目业务时间段配置
+app:
+  time-periods:
+    # DeepSeek 模型 Token 计费高峰时间段（双倍价格）
+    deepseek-during-peak:
+      - start: "09:00"
+        end: "12:00"
+
+      - start: "14:00"
+        end: "18:00"
+
+    empty-periods: []
+

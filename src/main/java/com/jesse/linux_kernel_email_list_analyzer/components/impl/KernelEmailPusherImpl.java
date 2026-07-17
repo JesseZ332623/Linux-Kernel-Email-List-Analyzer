@@ -2,9 +2,9 @@ package com.jesse.linux_kernel_email_list_analyzer.components.impl;
 
 import com.jesse.linux_kernel_email_list_analyzer.components.KernelEmailPusher;
 import com.jesse.linux_kernel_email_list_analyzer.components.imap_connection.SingleImapConnection;
-import com.jesse.linux_kernel_email_list_analyzer.components.imap_connection.StoreOperator;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
 import com.jesse.linux_kernel_email_list_analyzer.properties.LKMLRabbitMQProperties;
+import com.jesse.linux_kernel_email_list_analyzer.utils.ZoneUtils;
 import jakarta.mail.*;
 import jakarta.mail.internet.MimeMultipart;
 import jakarta.mail.search.FlagTerm;
@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
@@ -40,14 +39,6 @@ import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 @RequiredArgsConstructor
 public class KernelEmailPusherImpl implements KernelEmailPusher
 {
-    /** LKML 常用时区。*/
-    private static final
-    ZoneId KERNEL_TIMEZONE = ZoneId.of("America/Los_Angeles");
-
-    /** UTC 标准时区。*/
-    private static final
-    ZoneId UTC = ZoneId.of("UTC");
-
     /** 内核邮件发件时间标准格式。*/
     private static final
     DateTimeFormatter KERNEL_FORMAT
@@ -220,8 +211,8 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
             );
 
             plainTextEmail.setSubject(message.getSubject());
-            plainTextEmail.setUtcTime(sentInstant.atZone(UTC).format(ISO_DATE_TIME));
-            plainTextEmail.setKernelTime(sentInstant.atZone(KERNEL_TIMEZONE).format(KERNEL_FORMAT));
+            plainTextEmail.setUtcTime(sentInstant.atZone(ZoneUtils.UTC).format(ISO_DATE_TIME));
+            plainTextEmail.setKernelTime(sentInstant.atZone(ZoneUtils.KERNEL_TIMEZONE).format(KERNEL_FORMAT));
 
             log.info("Parse kernel email (message-id = {}) complete.", plainTextEmail.getMessageId());
 
@@ -363,68 +354,67 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
     }
 
     /** 推送操作的核心逻辑。*/
-    private StoreOperator<Void> doPush()
+    private Object
+    doPush(Store store) throws MessagingException
     {
-        return (store) -> {
-            Folder inbox = null;
+        Folder inbox = null;
 
+        try
+        {
+            inbox = store.getFolder("INBOX");
+            inbox.open(Folder.READ_WRITE);
+
+            // (1) 从邮箱服务拉取所有的未读邮件，保留最新的前 limit 封返回。
+            final Message[] messages
+                = this.fetchUnreadPlainTextEmails(inbox, kernalEmailPushLimit);
+
+            // (2) 将邮件数据分片
+            final List<List<Message>> splitMessages
+                = this.splitMessages(messages);
+
+            for (final List<Message> batch : splitMessages)
+            {
+                // (3) 标记这一片的邮件为 “阅后即焚”。
+                inbox.setFlags(batch.toArray(Message[]::new), DEFAULT_FLAGS, true);
+
+                // (4) 一边解析一边往 MQ 推送邮件，
+                // Rabbit MQ 与服务建立的是 AMQP 长连接，目前的体量不需要批量操作。
+                final List<CompletableFuture<PlainTextEmail>> pushFutures
+                    = batch.stream()
+                           .filter(Objects::nonNull)
+                           .map((message) ->
+                               CompletableFuture
+                                   .supplyAsync(() -> this.parseToPlainText(message), this.emailServiceExecutor)
+                                   .thenApply(this::pushToRabbitMQ)
+                           ).toList();
+
+                // (5) 等待完成并统计这一个批次的成功数量
+                final long successCount
+                    = pushFutures.stream()
+                        .map(CompletableFuture::join)
+                        .filter(Objects::nonNull)
+                        .count();
+
+                log.info("Pushed kernel emails complete ({} / {}).", successCount, batch.size());
+            }
+        }
+        finally
+        {
             try
             {
-                inbox = store.getFolder("INBOX");
-                inbox.open(Folder.READ_WRITE);
-
-                // (1) 从邮箱服务拉取所有的未读邮件，保留最新的前 limit 封返回。
-                final Message[] messages
-                    = this.fetchUnreadPlainTextEmails(inbox, kernalEmailPushLimit);
-
-                // (2) 将邮件数据分片
-                final List<List<Message>> splitMessages
-                    = this.splitMessages(messages);
-
-                for (final List<Message> batch : splitMessages)
+                if (Objects.nonNull(inbox) && inbox.isOpen())
                 {
-                    // (3) 标记这一片的邮件为 “阅后即焚”。
-                    inbox.setFlags(batch.toArray(Message[]::new), DEFAULT_FLAGS, true);
-
-                    // (4) 一边解析一边往 MQ 推送邮件，
-                    // Rabbit MQ 与服务建立的是 AMQP 长连接，目前的体量不需要批量操作。
-                    final List<CompletableFuture<PlainTextEmail>> pushFutures
-                        = batch.stream()
-                            .filter(Objects::nonNull)
-                            .map((message) ->
-                                CompletableFuture
-                                    .supplyAsync(() -> this.parseToPlainText(message), this.emailServiceExecutor)
-                                    .thenApply(this::pushToRabbitMQ)
-                            ).toList();
-
-                    // (5) 等待完成并统计这一个批次的成功数量
-                    final long successCount
-                        = pushFutures.stream()
-                            .map(CompletableFuture::join)
-                            .filter(Objects::nonNull)
-                            .count();
-
-                    log.info("Pushed kernel emails complete ({} / {}).", successCount, batch.size());
+                    // (6) 关闭收件箱列表，
+                    // expunges 值为 true 意味着全部删除标记为 DELETED 的邮件。
+                    inbox.close(true);
                 }
             }
-            finally
-            {
-                try
-                {
-                    if (Objects.nonNull(inbox) && inbox.isOpen())
-                    {
-                        // (6) 关闭收件箱列表，
-                        // expunges 值为 true 意味着全部删除标记为 DELETED 的邮件。
-                        inbox.close(true);
-                    }
-                }
-                catch (Exception exception) {
-                    log.error("Close inbox failed.", exception);
-                }
+            catch (Exception exception) {
+                log.error("Close inbox failed.", exception);
             }
+        }
 
-            return null;
-        };
+        return null;
     }
 
     /** 每个整点自动执行一次推送。*/
@@ -447,7 +437,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
         }
 
         try {
-            this.singleImapConnection.execute(this.doPush());
+            this.singleImapConnection.execute(this::doPush);
         }
         catch (MessagingException exception) {
             log.error("Push lkml email to message queue failed.", exception);
