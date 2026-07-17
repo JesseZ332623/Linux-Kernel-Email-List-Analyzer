@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /** IMAP 连接实例 keep-alive 定期保活组件。*/
@@ -33,6 +34,9 @@ public class ImapConnectionKeepAlive
 
     /** 连接保活任务是否正在执行（读多写少，不需要使用原子类型）。*/
     private volatile boolean running = true;
+
+    /** 执行保活任务操作的期值实例。*/
+    private volatile ScheduledFuture<?> performKeepAliveFuture;
 
     /** 检查IMAP Connection 连接保活专用单线程执行器是否被意外关闭。*/
     private boolean isExecutorShutdown()
@@ -76,11 +80,12 @@ public class ImapConnectionKeepAlive
          * 使用 scheduleWithFixedDelay() 而非 scheduleAtFixedRate()
          * 避免在获取连接耗时较长情况下的任务队列堆积导致的高频执行。
          */
-        this.imapConnectionKeepAliveExecutor
-            .scheduleWithFixedDelay(
-                this::performKeepAlive,
-                interval, interval, TimeUnit.SECONDS
-            );
+        this.performKeepAliveFuture
+            = this.imapConnectionKeepAliveExecutor
+                  .scheduleWithFixedDelay(
+                      this::performKeepAlive,
+                      interval, interval, TimeUnit.SECONDS
+                 );
 
         log.info(
             "IMAP connection keep-alive component started, interval {} seconds.",
@@ -95,6 +100,15 @@ public class ImapConnectionKeepAlive
         // 翻转运行标志位，后续的连接保活操作全部跳过
         this.running = false;
 
+        // 如果有保活任务还在执行直接掐掉（服务关闭时等待保活操作完成无意义）
+        if (Objects.nonNull(this.performKeepAliveFuture))
+        {
+            log.info(
+                "IMAP Keep-Alive future calceled (return {})",
+                this.performKeepAliveFuture.cancel(true)
+            );
+        }
+
         if (this.isExecutorShutdown())
         {
             log.debug("IMAP keep-alive executor already stopped.");
@@ -104,31 +118,7 @@ public class ImapConnectionKeepAlive
         log.info("Shutting down IMAP Keep-Alive executor...");
 
         // 关闭连接保活操作专用单线程执行器
-        this.imapConnectionKeepAliveExecutor.shutdown();
-
-        try
-        {
-            final long timeout
-                = this.properties.getKeepAliveShutdownWaitTimeout().toSeconds();
-
-            // 最多等待指定时间，超时直接强制关闭。
-            final boolean terminated
-                = this.imapConnectionKeepAliveExecutor
-                       .awaitTermination(timeout, TimeUnit.SECONDS);
-
-            if (!terminated)
-            {
-                log.warn("IMAP Keep-Alive executor did not terminate gracefully, forcing shutdown.");
-                this.imapConnectionKeepAliveExecutor.shutdownNow();
-            }
-        }
-        catch (InterruptedException interrupted)
-        {
-            Thread.currentThread().interrupt();
-
-            // 如果被外部中断了，也应该立刻关闭防止泄漏。
-            this.imapConnectionKeepAliveExecutor.shutdownNow();
-        }
+        this.imapConnectionKeepAliveExecutor.shutdownNow();
 
         log.info("IMAP connection Keep-Alive component stopped.");
     }
