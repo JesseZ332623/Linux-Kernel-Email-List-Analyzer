@@ -1,17 +1,21 @@
 package com.jesse.linux_kernel_email_list_analyzer.config;
 
+import com.jesse.linux_kernel_email_list_analyzer.properties.EmailReceiverProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 
 /** 并发组件配置类。*/
 @Configuration
+@RequiredArgsConstructor
 public class ConcurrentConfig
 {
+    /** 邮箱服务属性配置类。*/
+    private final EmailReceiverProperties emailReceiverProperties;
+
     /** 邮件服务专用虚拟线程执行器。*/
     @Bean(
         name          = "email-service-executor",
@@ -29,18 +33,25 @@ public class ConcurrentConfig
     }
 
     /** IMAP Connection 连接保活专用单线程执行器。*/
-    @Bean(
-        name          = "imap-connection-keepalive-executor",
-        destroyMethod = "shutdown"
-    )
+    @Bean(name = "imap-connection-keepalive-executor")
     public ScheduledExecutorService imapConnectionKeepAliveExecutor()
     {
-        final ThreadFactory threadFactory
-            = Thread.ofVirtual()
-                    .name("imap-keepalive-", 0)
-                    .factory();
+        final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 
-        return
-        Executors.newSingleThreadScheduledExecutor(threadFactory);
+        final int awaitTimeout
+            = (int) this.emailReceiverProperties.getKeepAliveShutdownWaitTimeout()
+                        .toSeconds();
+
+        scheduler.setPoolSize(1);                              // 单线程
+        scheduler.setThreadNamePrefix("imap-keepalive-");
+        scheduler.setDaemon(true);                            // 守护线程
+        scheduler.setAwaitTerminationSeconds(awaitTimeout);   // 关闭时超时时间
+        scheduler.setWaitForTasksToCompleteOnShutdown(true);  // 优雅关闭，等待任务完成
+        scheduler.setRemoveOnCancelPolicy(true);              // 队列中的线程被中断则立刻离队
+
+        // 初始化
+        scheduler.initialize();
+
+        return scheduler.getScheduledExecutor();
     }
 }
