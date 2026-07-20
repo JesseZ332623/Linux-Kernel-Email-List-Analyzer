@@ -82,6 +82,7 @@ COMMENT='AI 模型 token 资费消耗每日汇总表';
 CREATE TABLE `linux_kernal_email` (
   `id`              BIGINT       NOT NULL,
   `task_id`         CHAR(36)     NOT NULL COMMENT '本次大模型请求的唯一标识符，用于追踪和问题排查',
+  `analyze_status`  INT          NOT NULL DEFAULT '0' COMMENT '本邮件分析任务的执行状态 (0 未开始, 1 进行中, 2 已完成)'
   `message_id`      VARCHAR(128) NOT NULL COMMENT 'RFC 822 消息 ID',
   `from`            VARCHAR(64)  NOT NULL COMMENT '邮件发送人',
   `subject`         VARCHAR(256) NOT NULL COMMENT '邮件标题 ',
