@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.jesse.linux_kernel_email_list_analyzer.constant.KernelEmailAnalyzeStatus;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,6 +27,9 @@ public class LinuxKernerlEmailEntiy
 
     /** 本次大模型请求的唯一标识符，用于追踪和问题排查 */
     private String taskId;
+
+    /** 分析任务执行状态 */
+    private KernelEmailAnalyzeStatus analyzeStatus;
 
     /** RFC 822 消息 ID，由 发件邮件服务器 生成 */
     private String messageId;
@@ -50,6 +54,7 @@ public class LinuxKernerlEmailEntiy
     /** 创建时间 */
     private LocalDateTime createAt;
 
+    /** 插入一条新内核邮件数据调用本方法构造实体。*/
     public static LinuxKernerlEmailEntiy
     fromPlainTextEmail(Long nextId, String taskId, PlainTextEmail email)
     {
@@ -57,6 +62,9 @@ public class LinuxKernerlEmailEntiy
 
         lkml.setId(nextId);
         lkml.setTaskId(taskId);
+
+        // 默认状态是未开始
+        lkml.setAnalyzeStatus(KernelEmailAnalyzeStatus.NOT_START);
 
         BeanUtils.copyProperties(email, lkml, LinuxKernerlEmailEntiy.class);
 
