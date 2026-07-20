@@ -8,6 +8,7 @@ import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
 import com.jesse.linux_kernel_email_list_analyzer.response.AIModelAnswerResponse;
 import com.jesse.linux_kernel_email_list_analyzer.service.AIModelAnswerAuditService;
 import com.jesse.linux_kernel_email_list_analyzer.service.KernelEmailAnalyzerService;
+import com.jesse.linux_kernel_email_list_analyzer.service.LinuxKernerlEmailService;
 import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,10 @@ public class KernelEmailAnalyzerServiceImpl implements KernelEmailAnalyzerServic
     /** LKML 内核补丁邮件分析结果持久化器接口。*/
     private final LKMLAnalyzeReportWriter reportWriter;
 
+    /** 内核邮件数据表服务接口。*/
+    private final
+    LinuxKernerlEmailService linuxKernerlEmailService;
+
     /** AI 模型 LKML 分析任务响应审计表服务类接口。*/
     private final AIModelAnswerAuditService aiModelAnswerAuditService;
 
@@ -50,23 +55,27 @@ public class KernelEmailAnalyzerServiceImpl implements KernelEmailAnalyzerServic
 
         try
         {
-            // (1) 执行分析
-            final AIModelAnswerResponse response
-                = this.kernelEmailAIModelAnalyzer.doAnalyze(kernalEmail);
+            // (1) 插入新内核邮件数据
+            final long kernelEmailId
+                = this.linuxKernerlEmailService.insertNew(kernalEmail);
 
-            // (2) 审计本次分析的信息
+            // (2) 执行分析
+            final AIModelAnswerResponse response
+                = this.kernelEmailAIModelAnalyzer.doAnalyze(kernelEmailId, kernalEmail);
+
+            // (3) 审计本次分析的信息
             this.aiModelAnswerAuditService.save(kernalEmail, response);
 
-            // (3) 生成分析报告
+            // (4) 生成分析报告
             final String htmlText
                 = this.templateGenerator.generate(
                     new AnalyzeResultTemplateData(kernalEmail, response)
                 );
 
-            // (4) 写到本地文件中去
+            // (5) 写到本地文件中去
             this.reportWriter.write(kernalEmail, htmlText);
 
-            // (5) 确认消息
+            // (6) 确认消息
             channel.basicAck(deliveryTag, false);
         }
         catch (Exception exception)
