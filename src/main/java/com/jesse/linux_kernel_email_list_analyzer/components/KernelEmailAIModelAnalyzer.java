@@ -9,5 +9,5 @@ public interface KernelEmailAIModelAnalyzer
 {
     /** 将内核邮件数据提交给 AI 模型分析，返回分析结果响应实例。*/
     AIModelAnswerResponse
-    doAnalyze(PlainTextEmail kernelEmail) throws JsonProcessingException;
+    doAnalyze(long kernelEmailId, PlainTextEmail kernelEmail) throws JsonProcessingException;
 }
