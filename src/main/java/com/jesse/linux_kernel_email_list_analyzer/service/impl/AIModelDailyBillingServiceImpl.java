@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -147,46 +148,65 @@ public class AIModelDailyBillingServiceImpl implements AIModelDailyBillingServic
 
         try
         {
-            // (1) 查询昨天一整天不同模型总共的 Token 消耗明细，
-            // 再按照 model 分组成 Map<String, List<AIModelAnswerUsageDTO>>
-            final Map<String, List<AIModelAnswerUsageDTO>> modelDailyUsages
+            // (1) 查询昨天一整天不同模型总共的 Token 消耗明细。
+            final List<AIModelAnswerUsageDTO> dailyUsage
                 = this.aiModelAnswerUsageRepository
-                      .getDailyUsageGroupByModel(startOfDay, endOfDay)
-                      .stream()
-                      .collect(Collectors.groupingBy(AIModelAnswerUsageDTO::getModel));
+                      .getDailyUsageGroupByModel(startOfDay, endOfDay);
 
-            for (var modelDailyUsage : modelDailyUsages.entrySet())
+            // 如果昨日没有任何 Token 消耗记录，构造空记录并插入即可
+            if (CollectionUtils.isEmpty(dailyUsage))
+            {
+                final long nextId = this.globalIdConsumer.nextId();
+
+                this.aiModelDailyBillingRepository
+                    .insert(AIModelDailyBillingEntity.makeEmptyDailyBill(nextId, yesterday));
+
+                log.info(
+                    "No AI model consumption found on {}, " +
+                    "insert empty daily bill record (id = {})",
+                    yesterday, nextId
+                );
+
+                return yesterday;
+            }
+
+            // (2) 再按照 model 分组成 Map<String, List<AIModelAnswerUsageDTO>>
+            final Map<String, List<AIModelAnswerUsageDTO>> modelDailyUsageMap
+                = dailyUsage.stream()
+                    .collect(Collectors.groupingBy(AIModelAnswerUsageDTO::getModel));
+
+            for (var modelDailyUsage : modelDailyUsageMap.entrySet())
             {
                 final String modelName                        = modelDailyUsage.getKey();
                 final List<AIModelAnswerUsageDTO> dailyUsages = modelDailyUsage.getValue();
 
-                // (2) 获取大模型对应的 Token 资费计算器实例
+                // (3) 获取大模型对应的 Token 资费计算器实例
                 //（查不到就按 DEFAULT_MODEL 兜底并告警）
                 final ModelTokenCalculator calculator
                     = this.selectCalculator(modelName);
 
-                // (3) 计算该模型昨日总共的 Token 资费消耗
+                // (4) 计算该模型昨日总共的 Token 资费消耗
                 final BigDecimal costRmb
                     = dailyUsages.stream()
                         .map(calculator::calculate)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                // (4) 组装 Token 消耗与资费汇总实体
+                // (5) 组装 Token 消耗与资费汇总实体
                 final AIModelDailyBillingEntity dailyBilling
                     = this.makeDailyBilling(yesterday, modelName, costRmb, dailyUsages);
 
-                // (5) 保存昨日的 Token 消耗与资费汇总数据
+                // (6) 保存昨日的 Token 消耗与资费汇总数据
                 this.aiModelDailyBillingRepository.upsertBilling(dailyBilling);
-
-                log.info(
-                    "Save AI model daily bill of token usage complete. " +
-                    "(billing date: {})",
-                    yesterday
-                );
             }
+
+            log.info(
+                "Save AI model daily bill of token usage complete. " +
+                "(billing date: {})",
+                yesterday
+            );
         }
         finally {
-            // (5) 翻转运行标志位
+            // (7) 翻转运行标志位
             this.saving.set(false);
         }
 
