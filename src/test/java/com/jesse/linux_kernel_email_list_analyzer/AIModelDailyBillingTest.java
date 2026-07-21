@@ -1,14 +1,18 @@
 package com.jesse.linux_kernel_email_list_analyzer;
 
+import com.jesse.linux_kernel_email_list_analyzer.components.global_id.GlobalIdConsumer;
 import com.jesse.linux_kernel_email_list_analyzer.components.token_calculate.ModelTokenCalculator;
 import com.jesse.linux_kernel_email_list_analyzer.dto.AIModelAnswerUsageDTO;
+import com.jesse.linux_kernel_email_list_analyzer.entity.AIModelDailyBillingEntity;
 import com.jesse.linux_kernel_email_list_analyzer.repository.AIModelAnswerUsageRepository;
+import com.jesse.linux_kernel_email_list_analyzer.repository.AIModelDailyBillingRepository;
 import com.jesse.linux_kernel_email_list_analyzer.utils.ZoneUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,10 +31,18 @@ public class AIModelDailyBillingTest
     @Autowired
     private AIModelAnswerUsageRepository aiModelAnswerUsageRepository;
 
+    /** AI 模型 token 资费消耗每日汇总表仓储类。*/
+    @Autowired
+    private AIModelDailyBillingRepository aiModelDailyBillingRepository;
+
     /** 模型计算器表。*/
     @Autowired
     @Qualifier("model-token-calculator-map")
     private Map<String, ModelTokenCalculator> modelTokenCalculatorMap;
+
+    /** 全局 ID 消费机接口。*/
+    @Autowired
+    private GlobalIdConsumer globalIdConsumer;
 
     /** 默认模型名称（如果查询不到 Token 资费计算器就按这个兜底）*/
     private static final
@@ -58,6 +70,7 @@ public class AIModelDailyBillingTest
     }
 
     @Test
+    @Transactional(readOnly = true)
     public void testModelDailyBilling()
     {
         final LocalDate yesterday
@@ -95,5 +108,23 @@ public class AIModelDailyBillingTest
                 modelName, costRmb, startOfDay, endOfDay
             );
         }
+    }
+
+    /**
+     * 测试空记录的插入，在测试方法中使用事务注解，
+     * 最后默认会回滚事务。
+     */
+    @Test
+    @Transactional(rollbackFor = Exception.class)
+    public void insertEmptyRecodTest()
+    {
+        final LocalDate yesterday
+            = LocalDate.now(ZoneUtils.LOCAL_TIMEZONE).minusDays(1);
+
+        final long nextId
+            = this.globalIdConsumer.nextId();
+
+        this.aiModelDailyBillingRepository
+            .insert(AIModelDailyBillingEntity.makeEmptyDailyBill(nextId, yesterday));
     }
 }

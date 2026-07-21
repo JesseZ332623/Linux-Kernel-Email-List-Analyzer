@@ -43,4 +43,21 @@ public class AIModelDailyBillingEntity
 
     /** 生成时间 */
     private LocalDateTime createAt;
+
+    /**
+     * 在当日没有任何 Token 消耗记录的时候插入这个空对象，
+     * 数据库这边会用默认值填充。
+     */
+    public static AIModelDailyBillingEntity
+    makeEmptyDailyBill(Long nextId, LocalDate yesterday)
+    {
+        final AIModelDailyBillingEntity empty
+            = new AIModelDailyBillingEntity();
+
+        empty.setId(nextId);
+        empty.setBillingDate(yesterday);
+        empty.setCreateAt(LocalDateTime.now());
+
+        return empty;
+    }
 }
