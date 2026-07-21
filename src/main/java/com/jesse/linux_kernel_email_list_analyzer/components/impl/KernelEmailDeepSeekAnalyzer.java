@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jesse.linux_kernel_email_list_analyzer.annotation.TimeMonitor;
 import com.jesse.linux_kernel_email_list_analyzer.components.KernelEmailAIModelAnalyzer;
+import com.jesse.linux_kernel_email_list_analyzer.constant.KernelEmailAnalyzeStatus;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelChatMessage;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelChatThinking;
@@ -11,6 +12,7 @@ import com.jesse.linux_kernel_email_list_analyzer.properties.DeepSeekChatPropert
 import com.jesse.linux_kernel_email_list_analyzer.repository.ApplicationApiKeysRepository;
 import com.jesse.linux_kernel_email_list_analyzer.request.AIModelChatRequest;
 import com.jesse.linux_kernel_email_list_analyzer.response.AIModelAnswerResponse;
+import com.jesse.linux_kernel_email_list_analyzer.service.LinuxKernerlEmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ResourceLoader;
@@ -18,6 +20,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
@@ -40,6 +43,10 @@ public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
     /** 第三方应用访问 API Keys 表仓库类。*/
     private final
     ApplicationApiKeysRepository applicationApiKeysRepository;
+
+    /** 内核邮件数据表服务实现类。*/
+    private final
+    LinuxKernerlEmailService linuxKernerlEmailService;
 
     /** 通用的 Jackson 对象映射器。*/
     private final ObjectMapper objectMapper;
@@ -114,7 +121,7 @@ public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
         timeunit      = TimeUnit.SECONDS
     )
     public AIModelAnswerResponse
-    doAnalyze(PlainTextEmail kernelEmail) throws JsonProcessingException
+    doAnalyze(long kernelEmailId, PlainTextEmail kernelEmail) throws JsonProcessingException
     {
         log.info("Analyzing kernel email: {}", kernelEmail.getMessageId());
 
@@ -135,16 +142,41 @@ public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
         request.setReasoningEffort(this.deepSeekChatProperties.getReasoningEffort());
         request.setStream(this.deepSeekChatProperties.isStream());
 
-        final String responseJSON
-            = this.restTemplate
-                  .postForObject(
-                      this.deepSeekChatProperties.getModelEndpointUrl(),
-                      new HttpEntity<>(request, httpHeaders),
-                      String.class
-                  );
+        // (1) 设置本邮件的分析执行状态为执行中
+        this.linuxKernerlEmailService
+            .updateAnalyzeStatusById(kernelEmailId, KernelEmailAnalyzeStatus.IN_PROGRESS);
 
-        return
-        this.objectMapper
-            .readValue(responseJSON, AIModelAnswerResponse.class);
+        try
+        {
+            // (2) 向 DeepSeek 模型发起 POST 请求
+            final String responseJSON
+                = this.restTemplate
+                      .postForObject(
+                          this.deepSeekChatProperties.getModelEndpointUrl(),
+                          new HttpEntity<>(request, httpHeaders),
+                          String.class
+                      );
+
+            // (3) 解析响应体
+            final AIModelAnswerResponse analyzeResponse
+                = this.objectMapper
+                .readValue(responseJSON, AIModelAnswerResponse.class);
+
+            // (4) 将指定 id 的邮件与指定的分析任务关联
+            this.linuxKernerlEmailService
+                .updateTaskIdById(kernelEmailId, analyzeResponse.getId());
+
+            // (5) 返回响应体
+            return analyzeResponse;
+        }
+        catch (JsonProcessingException | RestClientException exception)
+        {
+            // 如果出现 API 调用错误或者响应体 JSON 解析错误，
+            // 则重置分析执行状态为未开始
+            this.linuxKernerlEmailService
+                .updateAnalyzeStatusById(kernelEmailId, KernelEmailAnalyzeStatus.NOT_START);
+
+            throw exception;
+        }
     }
 }
