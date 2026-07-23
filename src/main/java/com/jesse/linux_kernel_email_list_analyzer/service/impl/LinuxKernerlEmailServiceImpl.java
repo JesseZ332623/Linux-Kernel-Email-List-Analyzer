@@ -2,7 +2,7 @@ package com.jesse.linux_kernel_email_list_analyzer.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jesse.linux_kernel_email_list_analyzer.components.global_id.GlobalIdConsumer;
-import com.jesse.linux_kernel_email_list_analyzer.constant.KernelEmailAnalyzeStatus;
+import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailStatus;
 import com.jesse.linux_kernel_email_list_analyzer.entity.LinuxKernerlEmailEntiy;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
 import com.jesse.linux_kernel_email_list_analyzer.repository.LinuxKernerlEmailRepository;
@@ -33,7 +33,7 @@ public class LinuxKernerlEmailServiceImpl
 
         final LinuxKernerlEmailEntiy lkml
             = LinuxKernerlEmailEntiy
-                .fromPlainTextEmail(nextId, "", email);
+                .fromPlainTextEmail(nextId, email);
 
         this.baseMapper.insert(lkml);
 
@@ -44,15 +44,15 @@ public class LinuxKernerlEmailServiceImpl
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, timeout = 5)
     public int
-    updateAnalyzeStatusByTaskId(String taskId, KernelEmailAnalyzeStatus status) {
-        return this.baseMapper.updateAnalyzeStatusByTaskId(taskId, status);
+    updateStatusByTaskId(String taskId, KernelEmailStatus status) {
+        return this.baseMapper.updateStatusByTaskId(taskId, status);
     }
 
     /** 修改某个内核邮件的分析任务执行状态。*/
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, timeout = 5)
-    public int updateAnalyzeStatusById(Long id, KernelEmailAnalyzeStatus status) {
-        return this.baseMapper.updateAnalyzeStatusById(id, status);
+    public int updateStatusById(Long id, KernelEmailStatus status) {
+        return this.baseMapper.updateStatusById(id, status);
     }
 
     /** 将指定 id 的邮件与指定的分析任务关联。*/
