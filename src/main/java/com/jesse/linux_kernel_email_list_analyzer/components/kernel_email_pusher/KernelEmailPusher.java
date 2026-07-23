@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.components;
+package com.jesse.linux_kernel_email_list_analyzer.components.kernel_email_pusher;
 
 /** Linux 内核补丁邮件推送器接口。*/
 public interface KernelEmailPusher
