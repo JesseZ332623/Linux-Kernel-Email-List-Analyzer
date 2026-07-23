@@ -1,7 +1,6 @@
 package com.jesse.linux_kernel_email_list_analyzer.service.impl;
 
 import com.jesse.linux_kernel_email_list_analyzer.components.global_id.GlobalIdConsumer;
-import com.jesse.linux_kernel_email_list_analyzer.constant.KernelEmailAnalyzeStatus;
 import com.jesse.linux_kernel_email_list_analyzer.converter.AIModelAnswerAuditConverter;
 import com.jesse.linux_kernel_email_list_analyzer.converter.AIModelAnswerContentConverter;
 import com.jesse.linux_kernel_email_list_analyzer.converter.AIModelAnswerUsageConverter;
@@ -76,10 +75,6 @@ public class AIModelAnswerAuditServiceImpl implements AIModelAnswerAuditService
 
         // (1) 保存模型信息摘要数据
         this.aiModelAnswerAuditRepository.insert(audit);
-
-        // (2) 标记这封邮件的分析状态为已完成
-        this.linuxKernerlEmailService
-            .updateAnalyzeStatusByTaskId(response.getId(), KernelEmailAnalyzeStatus.COMPLETE);
 
         // (3) 保存模型回复文本数据
         this.aiModelAnswerContentRepository.insert(content);
