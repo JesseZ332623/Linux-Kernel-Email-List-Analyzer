@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.components;
+package com.jesse.linux_kernel_email_list_analyzer.components.analyze_report_generator;
 
 import com.jesse.linux_kernel_email_list_analyzer.pojo.AnalyzeResultTemplateData;
 
