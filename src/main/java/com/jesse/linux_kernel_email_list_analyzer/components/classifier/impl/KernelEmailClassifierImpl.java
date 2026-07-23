@@ -1,7 +1,7 @@
 package com.jesse.linux_kernel_email_list_analyzer.components.classifier.impl;
 
 import com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailClassifier;
-import com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailEventType;
+import com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailTag;
 import com.jesse.linux_kernel_email_list_analyzer.utils.RegexUtils;
 import jakarta.mail.internet.MimeUtility;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
-import static com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailEventType.*;
+import static com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailTag.*;
 import static com.jesse.linux_kernel_email_list_analyzer.utils.KernelEmailClassifierUtils.*;
 
 /** 内核邮件分类器实现类。*/
@@ -46,7 +46,7 @@ public class KernelEmailClassifierImpl implements KernelEmailClassifier
     }
 
     /** 提取内核补丁邮件的标题中的事件类型。*/
-    private static KernelEmailEventType
+    private static KernelEmailTag
     extractEventTypeBySubject(String subject)
     {
         if (Objects.isNull(subject)) {
