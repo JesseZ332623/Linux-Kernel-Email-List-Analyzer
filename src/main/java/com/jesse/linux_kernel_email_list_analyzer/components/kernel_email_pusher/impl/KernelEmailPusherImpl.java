@@ -1,9 +1,14 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.impl;
+package com.jesse.linux_kernel_email_list_analyzer.components.kernel_email_pusher.impl;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.KernelEmailPusher;
+import com.jesse.linux_kernel_email_list_analyzer.components.kernel_email_pusher.KernelEmailPusher;
+import com.jesse.linux_kernel_email_list_analyzer.components.global_id.GlobalIdConsumer;
 import com.jesse.linux_kernel_email_list_analyzer.components.imap_connection.SingleImapConnection;
+import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailStateMachine;
+import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailEvents;
+import com.jesse.linux_kernel_email_list_analyzer.entity.LinuxKernerlEmailEntiy;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
 import com.jesse.linux_kernel_email_list_analyzer.properties.LKMLRabbitMQProperties;
+import com.jesse.linux_kernel_email_list_analyzer.repository.LinuxKernerlEmailRepository;
 import com.jesse.linux_kernel_email_list_analyzer.utils.ZoneUtils;
 import jakarta.mail.*;
 import jakarta.mail.internet.MimeMultipart;
@@ -18,12 +23,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -74,6 +81,17 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
     /** 邮件服务专用虚拟线程执行器。*/
     @Qualifier(value = "email-service-executor")
     private final ExecutorService emailServiceExecutor;
+
+    /** 全局 ID 消费机接口。*/
+    private final GlobalIdConsumer globalIdConsumer;
+
+    /** 内核邮件数据表仓储类。*/
+    private final
+    LinuxKernerlEmailRepository linuxKernerlEmailRepository;
+
+    /** 内核邮件状态机接口。*/
+    private final
+    KernelEmailStateMachine kernelEmailStateMachine;
 
     /** 推送操作是否正在执行？*/
     private final
@@ -305,9 +323,6 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
         final int batches
             = (messages.length + PROCESS_BATCH_SIZE - 1) / PROCESS_BATCH_SIZE;
 
-        final List<Message> messageList
-            = Arrays.asList(messages);
-
         /*
          * (2) 将 messages 按片拷贝到每一个 List<Message> 中去，
          * 最后收集成分片列表 List<List<Message>>。
@@ -318,36 +333,62 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
                 final int from = index * PROCESS_BATCH_SIZE;
                 final int to   = Math.min(from + PROCESS_BATCH_SIZE, messages.length);
 
-                return messageList.subList(from, to);
+                return Arrays.asList(messages).subList(from, to);
             }).toList();
     }
 
-    /** 将一份内核补丁邮件推送至 RabbitMQ。*/
-    private PlainTextEmail pushToRabbitMQ(PlainTextEmail kernelEmail)
+    /** 将拉取到的内核邮件数据插入数据库。*/
+    private Map<Long, PlainTextEmail>
+    insertToDatabase(PlainTextEmail kernelEmail)
     {
-        if (Objects.nonNull(kernelEmail))
+        final long nextId = this.globalIdConsumer.nextId();
+
+        this.linuxKernerlEmailRepository
+            .insert(LinuxKernerlEmailEntiy.fromPlainTextEmail(nextId, kernelEmail));
+
+        return Map.of(nextId, kernelEmail);
+    }
+
+    /** 将一份内核补丁邮件推送至 RabbitMQ。*/
+    private Map<Long, PlainTextEmail>
+    pushToRabbitMQ(Map<Long, PlainTextEmail> kernelEmailMap)
+    {
+        if (!CollectionUtils.isEmpty(kernelEmailMap))
         {
-            try
+            for (var kernelEmail : kernelEmailMap.entrySet())
             {
-                this.rabbitTemplate.convertAndSend(
-                    this.properties.getExchangeName(),
-                    this.properties.getRoutingKey(),
-                    kernelEmail,
-                    new CorrelationData(kernelEmail.getMessageId())
-                );
+                try
+                {
+                    // (1) 把邮件投递到 RabbitMQ
+                    this.rabbitTemplate.convertAndSend(
+                        this.properties.getExchangeName(),
+                        this.properties.getRoutingKey(),
+                        kernelEmail,
+                        new CorrelationData(kernelEmail.getValue().getMessageId())
+                    );
 
-                log.info(
-                    "Pushed kernel email (message-id = {}) complete.",
-                    kernelEmail.getMessageId()
-                );
+                    // (2) 投递成功则变更状态到 PUSHED
+                    this.kernelEmailStateMachine
+                        .fireEvent(kernelEmail.getKey(), KernelEmailEvents.PUSH_SUCCESS);
 
-                return kernelEmail;
+                    log.info(
+                        "Pushed kernel email (message-id = {}) complete.",
+                        kernelEmail.getValue().getMessageId()
+                    );
+                }
+                catch (AmqpException exception)
+                {
+                    // 如果这封邮件投递失败，则变更状态到 PUSH_FAILED
+                    this.kernelEmailStateMachine
+                        .fireEvent(kernelEmail.getKey(), KernelEmailEvents.PUSH_FAILURE);
+
+                    log.error("Kernel email join queue failed", exception);
+
+                    return null;
+                }
             }
-            catch (AmqpException exception)
-            {
-                log.error("Kernel email join queue failed", exception);
-                return null;
-            }
+
+            return kernelEmailMap;
         }
 
         return null;
@@ -379,12 +420,13 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
 
                 // (4) 一边解析一边往 MQ 推送邮件，
                 // Rabbit MQ 与服务建立的是 AMQP 长连接，目前的体量不需要批量操作。
-                final List<CompletableFuture<PlainTextEmail>> pushFutures
+                final var pushFutures
                     = batch.stream()
                            .filter(Objects::nonNull)
                            .map((message) ->
                                CompletableFuture
                                    .supplyAsync(() -> this.parseToPlainText(message), this.emailServiceExecutor)
+                                   .thenApply(this::insertToDatabase)
                                    .thenApply(this::pushToRabbitMQ)
                            ).toList();
 

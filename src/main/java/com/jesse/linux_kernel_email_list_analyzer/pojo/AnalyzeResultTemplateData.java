@@ -11,6 +11,9 @@ import lombok.*;
 @AllArgsConstructor
 public class AnalyzeResultTemplateData
 {
+    /** 内核邮件在数据库中的 ID */
+    private Long kernelEmailId;
+
     /** 一封内核补丁邮件。*/
     private PlainTextEmail kernelEmail;
 

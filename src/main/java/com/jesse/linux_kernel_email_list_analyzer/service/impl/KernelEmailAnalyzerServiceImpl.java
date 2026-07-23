@@ -1,14 +1,15 @@
 package com.jesse.linux_kernel_email_list_analyzer.service.impl;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.KernelEmailAIModelAnalyzer;
-import com.jesse.linux_kernel_email_list_analyzer.components.LKMLAnalyzeReportWriter;
-import com.jesse.linux_kernel_email_list_analyzer.components.LKMLAnalyzeTemplateGenerator;
+import com.jesse.linux_kernel_email_list_analyzer.components.kernel_email_analyzer.KernelEmailAIModelAnalyzer;
+import com.jesse.linux_kernel_email_list_analyzer.components.report_persistence.LKMLAnalyzeReportWriter;
+import com.jesse.linux_kernel_email_list_analyzer.components.analyze_report_generator.LKMLAnalyzeTemplateGenerator;
+import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailStateMachine;
+import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.AnalyzeResultTemplateData;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
 import com.jesse.linux_kernel_email_list_analyzer.response.AIModelAnswerResponse;
 import com.jesse.linux_kernel_email_list_analyzer.service.AIModelAnswerAuditService;
 import com.jesse.linux_kernel_email_list_analyzer.service.KernelEmailAnalyzerService;
-import com.jesse.linux_kernel_email_list_analyzer.service.LinuxKernerlEmailService;
 import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Map;
 
 /** Linux 内核补丁邮件分析服务实现。*/
 @Slf4j
@@ -34,9 +36,9 @@ public class KernelEmailAnalyzerServiceImpl implements KernelEmailAnalyzerServic
     /** LKML 内核补丁邮件分析结果持久化器接口。*/
     private final LKMLAnalyzeReportWriter reportWriter;
 
-    /** 内核邮件数据表服务接口。*/
+    /** 内核邮件状态机接口。*/
     private final
-    LinuxKernerlEmailService linuxKernerlEmailService;
+    KernelEmailStateMachine kernelEmailStateMachine;
 
     /** AI 模型 LKML 分析任务响应审计表服务类接口。*/
     private final AIModelAnswerAuditService aiModelAnswerAuditService;
@@ -45,7 +47,7 @@ public class KernelEmailAnalyzerServiceImpl implements KernelEmailAnalyzerServic
     @Override
     @RabbitListener(queues = "${app.rabbitmq-queue-props.lkml.queue-name}")
     public void handleKernelEmail(
-        final PlainTextEmail kernalEmail,
+        final Map<Long, PlainTextEmail> kernelEmailMap,
         final Channel channel,
         final Message message
     )
@@ -55,25 +57,32 @@ public class KernelEmailAnalyzerServiceImpl implements KernelEmailAnalyzerServic
 
         try
         {
-            // (1) 插入新内核邮件数据
-            final long kernelEmailId
-                = this.linuxKernerlEmailService.insertNew(kernalEmail);
+            for (var kernelEmailEntry : kernelEmailMap.entrySet())
+            {
+                final long kernelEmailId         = kernelEmailEntry.getKey();
+                final PlainTextEmail kernelEmail = kernelEmailEntry.getValue();
 
-            // (2) 执行分析
-            final AIModelAnswerResponse response
-                = this.kernelEmailAIModelAnalyzer.doAnalyze(kernelEmailId, kernalEmail);
+                // (1) 变更这封邮件的状态为 ANALYSIS_PENDING
+                this.kernelEmailStateMachine
+                    .fireEvent(kernelEmailId, KernelEmailEvents.PULL_SUCCESS);
 
-            // (3) 审计本次分析的信息
-            this.aiModelAnswerAuditService.save(kernalEmail, response);
+                // (2) 执行分析
+                final AIModelAnswerResponse response
+                    = this.kernelEmailAIModelAnalyzer
+                          .doAnalyze(kernelEmailId, kernelEmail);
 
-            // (4) 生成分析报告
-            final String htmlText
-                = this.templateGenerator.generate(
-                    new AnalyzeResultTemplateData(kernalEmail, response)
-                );
+                // (3) 审计本次分析的信息
+                this.aiModelAnswerAuditService.save(kernelEmail, response);
 
-            // (5) 写到本地文件中去
-            this.reportWriter.write(kernalEmail, htmlText);
+                // (4) 生成分析报告
+                final String htmlText
+                    = this.templateGenerator.generate(
+                        new AnalyzeResultTemplateData(kernelEmailId, kernelEmail, response)
+                    );
+
+                // (5) 写到本地文件中去
+                this.reportWriter.write(kernelEmailId, kernelEmail, htmlText);
+            }
 
             // (6) 确认消息
             channel.basicAck(deliveryTag, false);

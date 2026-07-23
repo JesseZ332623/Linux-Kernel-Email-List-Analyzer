@@ -1,10 +1,11 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.impl;
+package com.jesse.linux_kernel_email_list_analyzer.components.kernel_email_analyzer.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jesse.linux_kernel_email_list_analyzer.annotation.TimeMonitor;
-import com.jesse.linux_kernel_email_list_analyzer.components.KernelEmailAIModelAnalyzer;
-import com.jesse.linux_kernel_email_list_analyzer.constant.KernelEmailAnalyzeStatus;
+import com.jesse.linux_kernel_email_list_analyzer.components.kernel_email_analyzer.KernelEmailAIModelAnalyzer;
+import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailStateMachine;
+import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelChatMessage;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelChatThinking;
@@ -43,6 +44,10 @@ public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
     /** 第三方应用访问 API Keys 表仓库类。*/
     private final
     ApplicationApiKeysRepository applicationApiKeysRepository;
+
+    /** 内核邮件状态机接口。*/
+    private final
+    KernelEmailStateMachine kernelEmailStateMachine;
 
     /** 内核邮件数据表服务实现类。*/
     private final
@@ -142,9 +147,9 @@ public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
         request.setReasoningEffort(this.deepSeekChatProperties.getReasoningEffort());
         request.setStream(this.deepSeekChatProperties.isStream());
 
-        // (1) 设置本邮件的分析执行状态为执行中
-        this.linuxKernerlEmailService
-            .updateAnalyzeStatusById(kernelEmailId, KernelEmailAnalyzeStatus.IN_PROGRESS);
+        // (1) 流转本邮件的状态为 正在分析中
+        this.kernelEmailStateMachine
+            .fireEvent(kernelEmailId, KernelEmailEvents.START_ANALYSIS);
 
         try
         {
@@ -166,15 +171,19 @@ public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
             this.linuxKernerlEmailService
                 .updateTaskIdById(kernelEmailId, analyzeResponse.getId());
 
-            // (5) 返回响应体
+            // (5) 流转本邮件的状态为 分析成功
+            this.kernelEmailStateMachine
+                .fireEvent(kernelEmailId, KernelEmailEvents.ANALYSIS_SUCCESS);
+
+            // (6) 返回响应体
             return analyzeResponse;
         }
         catch (JsonProcessingException | RestClientException exception)
         {
             // 如果出现 API 调用错误或者响应体 JSON 解析错误，
-            // 则重置分析执行状态为未开始
-            this.linuxKernerlEmailService
-                .updateAnalyzeStatusById(kernelEmailId, KernelEmailAnalyzeStatus.NOT_START);
+            // 则重置分析执行状态为分析失败
+            this.kernelEmailStateMachine
+                .fireEvent(kernelEmailId, KernelEmailEvents.ANALYSIS_FAILURE);
 
             throw exception;
         }

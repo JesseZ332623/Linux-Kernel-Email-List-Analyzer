@@ -1,7 +1,9 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.impl;
+package com.jesse.linux_kernel_email_list_analyzer.components.report_persistence.impl;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.LKMLAnalyzeReportWriter;
+import com.jesse.linux_kernel_email_list_analyzer.components.report_persistence.LKMLAnalyzeReportWriter;
 import com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailClassifier;
+import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailStateMachine;
+import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
 import com.jesse.linux_kernel_email_list_analyzer.utils.RegexUtils;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,10 @@ public class LKMLAnalyzeReportWriterImpl implements LKMLAnalyzeReportWriter
 {
     /** 内核邮件分类器接口。*/
     private final KernelEmailClassifier kernelEmailClassifier;
+
+    /** 内核邮件状态机接口。*/
+    private final
+    KernelEmailStateMachine kernelEmailStateMachine;
 
     @Value("${app.report-path-prefix}")
     private String REPORT_PATH_PREFIX;
@@ -44,8 +50,11 @@ public class LKMLAnalyzeReportWriterImpl implements LKMLAnalyzeReportWriter
 
     @Override
     public void
-    write(PlainTextEmail plainTextEmail, String htmlText) throws IOException
+    write(Long kernelEmailId, PlainTextEmail plainTextEmail, String htmlText) throws IOException
     {
+        this.kernelEmailStateMachine
+            .fireEvent(kernelEmailId, KernelEmailEvents.START_PESISTING);
+
         final String from    = plainTextEmail.getFrom();
         final String subject = plainTextEmail.getSubject();
 
@@ -58,13 +67,26 @@ public class LKMLAnalyzeReportWriterImpl implements LKMLAnalyzeReportWriter
 
         log.info("Save analyze report to {}", finalReportPath);
 
-        // (2) 确保父目录存在，不存在则创建反之跳过
-        Files.createDirectories(finalReportPath.getParent());
+        try
+        {
+            // (2) 确保父目录存在，不存在则创建反之跳过
+            Files.createDirectories(finalReportPath.getParent());
 
-        // (3) 将报告写入指定目录下
-        Files.writeString(
-            finalReportPath, htmlText,
-            StandardOpenOption.CREATE
-        );
+            // (3) 将报告写入指定目录下
+            Files.writeString(
+                finalReportPath, htmlText,
+                StandardOpenOption.CREATE
+            );
+
+            this.kernelEmailStateMachine
+                .fireEvent(kernelEmailId, KernelEmailEvents.PERSISTENCE_SUCCESS);
+        }
+        catch (IOException exception)
+        {
+            this.kernelEmailStateMachine
+                .fireEvent(kernelEmailId, KernelEmailEvents.PERSISTENCE_FAILURE);
+
+            throw exception;
+        }
     }
 }

@@ -1,6 +1,6 @@
 package com.jesse.linux_kernel_email_list_analyzer.controller;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.KernelEmailPusher;
+import com.jesse.linux_kernel_email_list_analyzer.components.kernel_email_pusher.KernelEmailPusher;
 import com.jesse.linux_kernel_email_list_analyzer.response.CustomizedResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -25,11 +25,12 @@ public class KernelEmailPusherController
     {
         this.kernelEmailPusher.push();
 
-        return CustomizedResponse.responseOf(
+        return
+        CustomizedResponse.responseOf(
             response,
             HttpStatus.OK,
             "Push kernel email complete, " +
-                "please refer to the service log for specific details.",
+            "please refer to the service log for specific details.",
             null
         );
     }
