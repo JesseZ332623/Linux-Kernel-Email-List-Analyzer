@@ -1,6 +1,6 @@
 package com.jesse.linux_kernel_email_list_analyzer.utils;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailEventType;
+import com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailTag;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -75,7 +75,7 @@ final public class KernelEmailClassifierUtils
      * 需要准备一个降级正则表，作为按标签分类失败时的降级策略。
      */
     public static final
-    Map<Pattern, KernelEmailEventType> FALLBACK_PATTERNS = makeFallbackPatternsMap();
+    Map<Pattern, KernelEmailTag> FALLBACK_PATTERNS = makeFallbackPatternsMap();
 
     private static Pattern
     caseInsensitivePattern(String regex) {
@@ -87,9 +87,9 @@ final public class KernelEmailClassifierUtils
      * 需要使用不可变的 {@link LinkedHashMap} 确保插入顺序。
      */
     private static
-    Map<Pattern, KernelEmailEventType> makeFallbackPatternsMap()
+    Map<Pattern, KernelEmailTag> makeFallbackPatternsMap()
     {
-        final Map<Pattern, KernelEmailEventType>
+        final Map<Pattern, KernelEmailTag>
             fallbackPatterns = new LinkedHashMap<>();
 
         /*
@@ -105,28 +105,28 @@ final public class KernelEmailClassifierUtils
          */
         fallbackPatterns.put(
             caseInsensitivePattern("^Linux\\s+\\d+\\.\\d+"),
-            KernelEmailEventType.ANNOUNCE
+            KernelEmailTag.ANNOUNCE
         );
 
         // ANNOUNCE 变体
         fallbackPatterns.put(
             caseInsensitivePattern("(announcing|released|now available|is out)"),
-            KernelEmailEventType.ANNOUNCE
+            KernelEmailTag.ANNOUNCE
         );
 
         fallbackPatterns.put(
             caseInsensitivePattern("(Please pull|GIT PULL|git pull)"),
-            KernelEmailEventType.GIT_PULL
+            KernelEmailTag.GIT_PULL
         );
 
         fallbackPatterns.put(
             caseInsensitivePattern("(please review|request for review|review requested)"),
-            KernelEmailEventType.REVIEW
+            KernelEmailTag.REVIEW
         );
 
         fallbackPatterns.put(
             caseInsensitivePattern("^(RFC|Request for Comments)[\\s:]"),
-            KernelEmailEventType.RFC
+            KernelEmailTag.RFC
         );
 
         /*
@@ -135,7 +135,7 @@ final public class KernelEmailClassifierUtils
          */
         fallbackPatterns.put(
             caseInsensitivePattern("\\[\\d+/\\d+\\]"),
-            KernelEmailEventType.PATCH
+            KernelEmailTag.PATCH
         );
 
         return Collections.unmodifiableMap(fallbackPatterns);
