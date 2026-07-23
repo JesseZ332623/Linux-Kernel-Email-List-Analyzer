@@ -7,7 +7,7 @@ import lombok.ToString;
 /** 内核补丁邮件事件类型标签枚举。*/
 @ToString
 @RequiredArgsConstructor
-public enum KernelEmailEventType
+public enum KernelEmailTag
 {
     /**
      * 子系统维护者向 Linus Torvalds（或上级维护者）发送的代码拉取请求。</br>
