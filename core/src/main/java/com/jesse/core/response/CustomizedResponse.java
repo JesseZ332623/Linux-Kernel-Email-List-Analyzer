@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.response;
+package com.jesse.core.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.servlet.http.HttpServletResponse;
@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
-/** 自定义响应体。*/
+/** 自定义通用响应体。*/
 @Getter
 @Builder
 @RequiredArgsConstructor
