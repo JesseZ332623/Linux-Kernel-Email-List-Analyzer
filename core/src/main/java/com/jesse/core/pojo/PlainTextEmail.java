@@ -1,6 +1,9 @@
-package com.jesse.linux_kernel_email_list_analyzer.pojo;
+package com.jesse.core.pojo;
 
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /** 表示一封纯文本邮件的 POJO。*/
 @Data
