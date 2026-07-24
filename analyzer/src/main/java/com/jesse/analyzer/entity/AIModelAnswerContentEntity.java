@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.entity;
+package com.jesse.analyzer.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
