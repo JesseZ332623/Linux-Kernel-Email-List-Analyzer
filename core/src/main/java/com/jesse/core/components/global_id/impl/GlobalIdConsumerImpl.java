@@ -1,9 +1,9 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.global_id.impl;
+package com.jesse.core.components.global_id.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jesse.linux_kernel_email_list_analyzer.components.global_id.GlobalIdConsumer;
-import com.jesse.linux_kernel_email_list_analyzer.properties.IdConsumerProperties;
+import com.jesse.core.components.global_id.GlobalIdConsumer;
+import com.jesse.core.properties.IdConsumerProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
