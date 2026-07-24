@@ -1,7 +1,7 @@
-package com.jesse.linux_kernel_email_list_analyzer.service;
+package com.jesse.analyzer.service;
 
-import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
-import com.jesse.linux_kernel_email_list_analyzer.response.AIModelAnswerResponse;
+import com.jesse.analyzer.response.AIModelAnswerResponse;
+import com.jesse.core.pojo.PlainTextEmail;
 
 /** AI 模型 LKML 分析任务响应审计表服务类接口。*/
 public interface AIModelAnswerAuditService
