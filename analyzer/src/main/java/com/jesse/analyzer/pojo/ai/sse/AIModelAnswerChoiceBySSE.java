@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.pojo.ai.sse;
+package com.jesse.analyzer.pojo.ai.sse;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
