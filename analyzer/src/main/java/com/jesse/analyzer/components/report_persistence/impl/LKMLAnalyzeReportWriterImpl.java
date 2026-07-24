@@ -1,11 +1,11 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.report_persistence.impl;
+package com.jesse.analyzer.components.report_persistence.impl;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.report_persistence.LKMLAnalyzeReportWriter;
-import com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailClassifier;
-import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailStateMachine;
-import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailEvents;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
-import com.jesse.linux_kernel_email_list_analyzer.utils.RegexUtils;
+import com.jesse.analyzer.components.classifier.KernelEmailClassifier;
+import com.jesse.analyzer.components.report_persistence.LKMLAnalyzeReportWriter;
+import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
+import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
+import com.jesse.core.pojo.PlainTextEmail;
+import com.jesse.core.utils.RegexUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
