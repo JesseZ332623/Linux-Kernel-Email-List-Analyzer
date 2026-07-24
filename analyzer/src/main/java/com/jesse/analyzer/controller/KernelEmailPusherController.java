@@ -1,7 +1,7 @@
-package com.jesse.linux_kernel_email_list_analyzer.controller;
+package com.jesse.analyzer.controller;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.kernel_email_pusher.KernelEmailPusher;
-import com.jesse.linux_kernel_email_list_analyzer.response.CustomizedResponse;
+import com.jesse.analyzer.components.kernel_email_pusher.KernelEmailPusher;
+import com.jesse.core.response.CustomizedResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
