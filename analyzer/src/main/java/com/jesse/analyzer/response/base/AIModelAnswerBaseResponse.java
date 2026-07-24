@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.response.base;
+package com.jesse.analyzer.response.base;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
