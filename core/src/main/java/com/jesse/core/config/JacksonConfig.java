@@ -1,11 +1,11 @@
-package com.jesse.linux_kernel_email_list_analyzer.config;
+package com.jesse.core.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /** Jackson 配置类。*/
 @Configuration
