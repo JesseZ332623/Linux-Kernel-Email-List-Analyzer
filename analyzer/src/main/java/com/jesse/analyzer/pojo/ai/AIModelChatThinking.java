@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.pojo.ai;
+package com.jesse.analyzer.pojo.ai;
 
 import lombok.*;
 
