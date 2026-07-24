@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.state_machine;
+package com.jesse.analyzer.components.state_machine;
 
 /** 内核邮件状态机接口。*/
 public interface KernelEmailStateMachine
