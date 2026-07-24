@@ -1,9 +1,9 @@
-package com.jesse.linux_kernel_email_list_analyzer.response.sse;
+package com.jesse.analyzer.response.sse;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelAnswerUsage;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.sse.AIModelAnswerChoiceBySSE;
-import com.jesse.linux_kernel_email_list_analyzer.response.base.AIModelAnswerBaseResponse;
+import com.jesse.analyzer.pojo.ai.AIModelAnswerUsage;
+import com.jesse.analyzer.pojo.ai.sse.AIModelAnswerChoiceBySSE;
+import com.jesse.analyzer.response.base.AIModelAnswerBaseResponse;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
