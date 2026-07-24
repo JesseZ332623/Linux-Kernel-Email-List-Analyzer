@@ -1,11 +1,8 @@
-package com.jesse.linux_kernel_email_list_analyzer.entity;
+package com.jesse.analyzer.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailStatus;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
+import com.baomidou.mybatisplus.annotation.*;
+import com.jesse.analyzer.components.state_machine.KernelEmailStatus;
+import com.jesse.core.pojo.PlainTextEmail;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -50,6 +47,10 @@ public class LinuxKernerlEmailEntiy
 
     /** 邮件正文（纯文本）*/
     private String textContent;
+
+    /** 乐观锁版本号字段 */
+    @Version
+    private Integer version;
 
     /** 创建时间 */
     private LocalDateTime createAt;
