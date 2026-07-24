@@ -1,7 +1,7 @@
-package com.jesse.linux_kernel_email_list_analyzer.config;
+package com.jesse.analyzer.config;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailEvents;
-import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailStatus;
+import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
+import com.jesse.analyzer.components.state_machine.KernelEmailStatus;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
