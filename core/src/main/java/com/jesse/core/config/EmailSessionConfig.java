@@ -1,6 +1,6 @@
-package com.jesse.linux_kernel_email_list_analyzer.config;
+package com.jesse.core.config;
 
-import com.jesse.linux_kernel_email_list_analyzer.properties.EmailReceiverProperties;
+import com.jesse.core.properties.EmailReceiverProperties;
 import jakarta.mail.Session;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +13,7 @@ import java.util.Properties;
 @RequiredArgsConstructor
 public class EmailSessionConfig
 {
+    /** 邮箱服务属性配置类。*/
     private final EmailReceiverProperties properties;
 
     @Bean(name = "gmail-session")
