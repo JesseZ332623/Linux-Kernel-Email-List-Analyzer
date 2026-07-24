@@ -1,6 +1,6 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.token_calculate;
+package com.jesse.analyzer.components.token_calculate;
 
-import com.jesse.linux_kernel_email_list_analyzer.dto.AIModelAnswerUsageDTO;
+import com.jesse.analyzer.dto.AIModelAnswerUsageDTO;
 
 import java.math.BigDecimal;
 
