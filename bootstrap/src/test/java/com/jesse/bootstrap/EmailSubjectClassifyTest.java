@@ -1,10 +1,11 @@
-package com.jesse.linux_kernel_email_list_analyzer;
+package com.jesse.bootstrap;
+
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailClassifier;
-import com.jesse.linux_kernel_email_list_analyzer.entity.LinuxKernerlEmailEntiy;
-import com.jesse.linux_kernel_email_list_analyzer.repository.LinuxKernerlEmailRepository;
+import com.jesse.analyzer.components.classifier.KernelEmailClassifier;
+import com.jesse.analyzer.entity.LinuxKernerlEmailEntiy;
+import com.jesse.analyzer.repository.LinuxKernerlEmailRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
