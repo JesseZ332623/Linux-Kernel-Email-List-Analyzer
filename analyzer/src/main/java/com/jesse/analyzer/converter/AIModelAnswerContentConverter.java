@@ -1,8 +1,8 @@
-package com.jesse.linux_kernel_email_list_analyzer.converter;
+package com.jesse.analyzer.converter;
 
-import com.jesse.linux_kernel_email_list_analyzer.entity.AIModelAnswerContentEntity;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelAnswerMessage;
-import com.jesse.linux_kernel_email_list_analyzer.response.AIModelAnswerResponse;
+import com.jesse.analyzer.entity.AIModelAnswerContentEntity;
+import com.jesse.analyzer.pojo.ai.AIModelAnswerMessage;
+import com.jesse.analyzer.response.AIModelAnswerResponse;
 import org.springframework.stereotype.Component;
 
 /** AI 模型 LKML 分析任务模型文本输出实体转换器。*/
