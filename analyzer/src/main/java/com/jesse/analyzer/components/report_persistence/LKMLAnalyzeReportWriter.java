@@ -1,6 +1,6 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.report_persistence;
+package com.jesse.analyzer.components.report_persistence;
 
-import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
+import com.jesse.core.pojo.PlainTextEmail;
 
 import java.io.IOException;
 
