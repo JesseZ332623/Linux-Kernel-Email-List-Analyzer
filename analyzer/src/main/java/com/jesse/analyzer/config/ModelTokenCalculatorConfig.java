@@ -1,8 +1,8 @@
-package com.jesse.linux_kernel_email_list_analyzer.config;
+package com.jesse.analyzer.config;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.token_calculate.ModelTokenCalculator;
-import com.jesse.linux_kernel_email_list_analyzer.components.token_calculate.impl.DeepSeekV4FlashTokenCalculator;
-import com.jesse.linux_kernel_email_list_analyzer.components.token_calculate.impl.DeepSeekV4ProTokenCalculator;
+import com.jesse.analyzer.components.token_calculate.ModelTokenCalculator;
+import com.jesse.analyzer.components.token_calculate.impl.DeepSeekV4FlashTokenCalculator;
+import com.jesse.analyzer.components.token_calculate.impl.DeepSeekV4ProTokenCalculator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
