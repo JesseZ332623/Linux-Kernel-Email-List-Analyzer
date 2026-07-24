@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.utils;
+package com.jesse.core.utils;
 
 import jakarta.mail.Folder;
 import jakarta.mail.MessagingException;
