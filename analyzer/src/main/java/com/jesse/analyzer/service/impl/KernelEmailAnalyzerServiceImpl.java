@@ -1,15 +1,15 @@
-package com.jesse.linux_kernel_email_list_analyzer.service.impl;
+package com.jesse.analyzer.service.impl;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.kernel_email_analyzer.KernelEmailAIModelAnalyzer;
-import com.jesse.linux_kernel_email_list_analyzer.components.report_persistence.LKMLAnalyzeReportWriter;
-import com.jesse.linux_kernel_email_list_analyzer.components.analyze_report_generator.LKMLAnalyzeTemplateGenerator;
-import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailStateMachine;
-import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailEvents;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.AnalyzeResultTemplateData;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
-import com.jesse.linux_kernel_email_list_analyzer.response.AIModelAnswerResponse;
-import com.jesse.linux_kernel_email_list_analyzer.service.AIModelAnswerAuditService;
-import com.jesse.linux_kernel_email_list_analyzer.service.KernelEmailAnalyzerService;
+import com.jesse.analyzer.components.analyze_report_generator.LKMLAnalyzeTemplateGenerator;
+import com.jesse.analyzer.components.kernel_email_analyzer.KernelEmailAIModelAnalyzer;
+import com.jesse.analyzer.components.report_persistence.LKMLAnalyzeReportWriter;
+import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
+import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
+import com.jesse.analyzer.pojo.AnalyzeResultTemplateData;
+import com.jesse.analyzer.response.AIModelAnswerResponse;
+import com.jesse.analyzer.service.AIModelAnswerAuditService;
+import com.jesse.analyzer.service.KernelEmailAnalyzerService;
+import com.jesse.core.pojo.PlainTextEmail;
 import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
