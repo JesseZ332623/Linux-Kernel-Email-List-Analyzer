@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.config;
+package com.jesse.core.config;
 
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
