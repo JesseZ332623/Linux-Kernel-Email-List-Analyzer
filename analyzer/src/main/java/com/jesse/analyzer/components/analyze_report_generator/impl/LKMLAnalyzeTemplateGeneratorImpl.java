@@ -1,9 +1,9 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.analyze_report_generator.impl;
+package com.jesse.analyzer.components.analyze_report_generator.impl;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.analyze_report_generator.LKMLAnalyzeTemplateGenerator;
-import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailStateMachine;
-import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailEvents;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.AnalyzeResultTemplateData;
+import com.jesse.analyzer.components.analyze_report_generator.LKMLAnalyzeTemplateGenerator;
+import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
+import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
+import com.jesse.analyzer.pojo.AnalyzeResultTemplateData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -63,6 +63,5 @@ public class LKMLAnalyzeTemplateGeneratorImpl implements LKMLAnalyzeTemplateGene
 
             throw exception;
         }
-
     }
 }
