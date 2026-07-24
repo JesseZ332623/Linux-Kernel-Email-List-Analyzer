@@ -1,8 +1,8 @@
-package com.jesse.linux_kernel_email_list_analyzer.request;
+package com.jesse.analyzer.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelChatMessage;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelChatThinking;
+import com.jesse.analyzer.pojo.ai.AIModelChatMessage;
+import com.jesse.analyzer.pojo.ai.AIModelChatThinking;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
