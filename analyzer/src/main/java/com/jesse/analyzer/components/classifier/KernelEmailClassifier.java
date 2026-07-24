@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.classifier;
+package com.jesse.analyzer.components.classifier;
 
 import java.nio.file.Path;
 
