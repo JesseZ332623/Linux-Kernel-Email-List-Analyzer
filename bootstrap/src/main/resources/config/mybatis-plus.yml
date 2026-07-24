@@ -2,7 +2,7 @@
 
 mybatis-plus:
   # 枚举类扫描包路径
-  type-enums-package: com.jesse.linux_kernel_email_list_analyzer.constant
+  type-enums-package: com.jesse.analyzer.components.state_machine
 
   configuration:
     # 不输出任何有关本依赖的日志
