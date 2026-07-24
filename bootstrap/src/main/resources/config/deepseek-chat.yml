@@ -16,4 +16,4 @@ app:
     # 系统提示词文件所在的类路径
     sys-prompts-classpath: "classpath:/prompts/lkml-system-role-prompt.md"
     # 用户提示词文件所在的类路径
-    usr-prompts-classpath: "classpath:/prompts/lkml-user-role-prompt.txt"
+    usr-prompts-classpath: "classpath:/prompts/lkml-user-role-prompt.md"
