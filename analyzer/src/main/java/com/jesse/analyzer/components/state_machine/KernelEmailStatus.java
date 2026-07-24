@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.state_machine;
+package com.jesse.analyzer.components.state_machine;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.Getter;
