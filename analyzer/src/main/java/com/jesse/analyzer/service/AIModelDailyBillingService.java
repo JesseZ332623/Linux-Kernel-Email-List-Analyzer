@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.service;
+package com.jesse.analyzer.service;
 
 import java.time.LocalDate;
 
