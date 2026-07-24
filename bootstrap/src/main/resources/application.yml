@@ -33,3 +33,4 @@ spring:
       - classpath:config/global-id-consumer.yml
       - classpath:config/mybatis-plus.yml
       - classpath:config/time-period.yml
+      - classpath:config/spring-statemachine.yml
