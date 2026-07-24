@@ -1,6 +1,7 @@
-package com.jesse.linux_kernel_email_list_analyzer.pojo;
+package com.jesse.analyzer.pojo;
 
-import com.jesse.linux_kernel_email_list_analyzer.response.AIModelAnswerResponse;
+import com.jesse.analyzer.response.AIModelAnswerResponse;
+import com.jesse.core.pojo.PlainTextEmail;
 import lombok.*;
 
 /** 内核邮件分析模板数据类。*/
