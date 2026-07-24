@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.imap_connection;
+package com.jesse.core.components.imap_connection;
 
 import jakarta.mail.MessagingException;
 
