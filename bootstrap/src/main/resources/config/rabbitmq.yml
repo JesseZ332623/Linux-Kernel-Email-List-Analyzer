@@ -1,4 +1,4 @@
-# RabbitMQ 属性配置。
+# RabbitMQ 属性配置
 
 spring:
   rabbitmq:
@@ -33,7 +33,7 @@ app:
       dlx-routing-key: lkml.dlx.key
 
   # 每次往消息队列推送的内核补丁邮件数量（-1 表示全量推送）
-  lkml-push-limit: 1
+  lkml-push-limit: 1000
 
 #logging:
 #  level:
