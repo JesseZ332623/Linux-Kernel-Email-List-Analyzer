@@ -1,8 +1,8 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.classifier.impl;
+package com.jesse.analyzer.components.classifier.impl;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailClassifier;
-import com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailTag;
-import com.jesse.linux_kernel_email_list_analyzer.utils.RegexUtils;
+import com.jesse.analyzer.components.classifier.KernelEmailClassifier;
+import com.jesse.analyzer.components.classifier.KernelEmailTag;
+import com.jesse.core.utils.RegexUtils;
 import jakarta.mail.internet.MimeUtility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +15,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 
-import static com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailTag.*;
-import static com.jesse.linux_kernel_email_list_analyzer.utils.KernelEmailClassifierUtils.*;
+import static com.jesse.analyzer.components.classifier.KernelEmailTag.*;
+import static com.jesse.analyzer.utils.KernelEmailClassifierUtils.*;
 
 /** 内核邮件分类器实现类。*/
 @Slf4j
