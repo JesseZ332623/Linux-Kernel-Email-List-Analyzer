@@ -1,6 +1,6 @@
-package com.jesse.linux_kernel_email_list_analyzer.utils;
+package com.jesse.analyzer.utils;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.classifier.KernelEmailTag;
+import com.jesse.analyzer.components.classifier.KernelEmailTag;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
