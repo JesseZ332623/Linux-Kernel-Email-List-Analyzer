@@ -1,8 +1,8 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.imap_connection.impl;
+package com.jesse.core.components.imap_connection.impl;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.imap_connection.SingleImapConnection;
-import com.jesse.linux_kernel_email_list_analyzer.properties.EmailReceiverProperties;
-import com.jesse.linux_kernel_email_list_analyzer.utils.ImapConnectionKeepAliveUtils;
+import com.jesse.core.components.imap_connection.SingleImapConnection;
+import com.jesse.core.properties.EmailReceiverProperties;
+import com.jesse.core.utils.ImapConnectionKeepAliveUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
