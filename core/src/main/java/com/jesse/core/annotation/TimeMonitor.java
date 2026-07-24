@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.annotation;
+package com.jesse.core.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
