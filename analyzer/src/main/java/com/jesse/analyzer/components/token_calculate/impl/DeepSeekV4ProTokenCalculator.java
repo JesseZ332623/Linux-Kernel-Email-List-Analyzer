@@ -1,7 +1,7 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.token_calculate.impl;
+package com.jesse.analyzer.components.token_calculate.impl;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.token_calculate.ModelTokenCalculator;
-import com.jesse.linux_kernel_email_list_analyzer.dto.AIModelAnswerUsageDTO;
+import com.jesse.analyzer.components.token_calculate.ModelTokenCalculator;
+import com.jesse.analyzer.dto.AIModelAnswerUsageDTO;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
