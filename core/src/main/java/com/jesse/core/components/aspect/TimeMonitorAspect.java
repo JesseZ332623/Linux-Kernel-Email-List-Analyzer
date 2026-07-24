@@ -1,7 +1,7 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.aspect;
+package com.jesse.core.components.aspect;
 
-import com.jesse.linux_kernel_email_list_analyzer.annotation.TimeMonitor;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
+import com.jesse.core.annotation.TimeMonitor;
+import com.jesse.core.pojo.PlainTextEmail;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.aspectj.lang.ProceedingJoinPoint;
