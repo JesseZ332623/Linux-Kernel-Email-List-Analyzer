@@ -1,6 +1,6 @@
-package com.jesse.linux_kernel_email_list_analyzer.config;
+package com.jesse.core.config;
 
-import com.jesse.linux_kernel_email_list_analyzer.properties.LKMLRabbitMQProperties;
+import com.jesse.core.properties.LKMLRabbitMQProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
