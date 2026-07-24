@@ -1,12 +1,12 @@
-package com.jesse.linux_kernel_email_list_analyzer.service.impl;
+package com.jesse.analyzer.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.jesse.linux_kernel_email_list_analyzer.components.global_id.GlobalIdConsumer;
-import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailStatus;
-import com.jesse.linux_kernel_email_list_analyzer.entity.LinuxKernerlEmailEntiy;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
-import com.jesse.linux_kernel_email_list_analyzer.repository.LinuxKernerlEmailRepository;
-import com.jesse.linux_kernel_email_list_analyzer.service.LinuxKernerlEmailService;
+import com.jesse.analyzer.components.state_machine.KernelEmailStatus;
+import com.jesse.analyzer.entity.LinuxKernerlEmailEntiy;
+import com.jesse.analyzer.repository.LinuxKernerlEmailRepository;
+import com.jesse.analyzer.service.LinuxKernerlEmailService;
+import com.jesse.core.components.global_id.GlobalIdConsumer;
+import com.jesse.core.pojo.PlainTextEmail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
