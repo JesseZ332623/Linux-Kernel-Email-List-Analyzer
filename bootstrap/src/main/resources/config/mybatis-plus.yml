@@ -1,0 +1,12 @@
+# Mybatis-Plus 属性配置
+
+mybatis-plus:
+  # 枚举类扫描包路径
+  type-enums-package: com.jesse.analyzer.components.state_machine
+
+  configuration:
+    # 不输出任何有关本依赖的日志
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+    # 使用标准的日志输出实现
+    # log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

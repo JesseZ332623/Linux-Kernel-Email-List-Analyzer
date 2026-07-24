@@ -1,0 +1,19 @@
+# DeepSeek 模型对话属性配置
+app:
+  deepseek-chat:
+    # AI 模型对话端点
+    model-endpoint-url: https://api.deepseek.com/chat/completions
+    # 模型名称
+    model-name: deepseek-v4-pro
+    # 端点访问身份凭证名
+    authorization-name: deepseek-lkml-analyzer
+    # 是否开启推理模式
+    thinking: enabled
+    # 模型的推理强度
+    reasoning-effort: high
+    # 是否流式输出
+    stream: false
+    # 系统提示词文件所在的类路径
+    sys-prompts-classpath: "classpath:/prompts/lkml-system-role-prompt.md"
+    # 用户提示词文件所在的类路径
+    usr-prompts-classpath: "classpath:/prompts/lkml-user-role-prompt.md"
