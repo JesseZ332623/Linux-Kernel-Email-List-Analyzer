@@ -1,7 +1,7 @@
-package com.jesse.linux_kernel_email_list_analyzer.repository;
+package com.jesse.analyzer.repository;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.jesse.linux_kernel_email_list_analyzer.entity.AIModelDailyBillingEntity;
+import com.jesse.analyzer.entity.AIModelDailyBillingEntity;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
