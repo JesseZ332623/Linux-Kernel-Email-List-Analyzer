@@ -1,9 +1,9 @@
-package com.jesse.linux_kernel_email_list_analyzer.service;
+package com.jesse.analyzer.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailStatus;
-import com.jesse.linux_kernel_email_list_analyzer.entity.LinuxKernerlEmailEntiy;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
+import com.jesse.analyzer.components.state_machine.KernelEmailStatus;
+import com.jesse.analyzer.entity.LinuxKernerlEmailEntiy;
+import com.jesse.core.pojo.PlainTextEmail;
 
 /** 内核邮件数据表服务接口类。*/
 public interface LinuxKernerlEmailService
