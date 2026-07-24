@@ -1,4 +1,4 @@
-package com.jesse.linux_kernel_email_list_analyzer.dto;
+package com.jesse.analyzer.dto;
 
 import lombok.*;
 
