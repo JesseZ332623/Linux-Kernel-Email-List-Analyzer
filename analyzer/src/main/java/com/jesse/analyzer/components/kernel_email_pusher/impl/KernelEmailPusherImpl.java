@@ -1,15 +1,15 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.kernel_email_pusher.impl;
+package com.jesse.analyzer.components.kernel_email_pusher.impl;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.kernel_email_pusher.KernelEmailPusher;
-import com.jesse.linux_kernel_email_list_analyzer.components.global_id.GlobalIdConsumer;
-import com.jesse.linux_kernel_email_list_analyzer.components.imap_connection.SingleImapConnection;
-import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailStateMachine;
-import com.jesse.linux_kernel_email_list_analyzer.components.state_machine.KernelEmailEvents;
-import com.jesse.linux_kernel_email_list_analyzer.entity.LinuxKernerlEmailEntiy;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
-import com.jesse.linux_kernel_email_list_analyzer.properties.LKMLRabbitMQProperties;
-import com.jesse.linux_kernel_email_list_analyzer.repository.LinuxKernerlEmailRepository;
-import com.jesse.linux_kernel_email_list_analyzer.utils.ZoneUtils;
+import com.jesse.analyzer.components.kernel_email_pusher.KernelEmailPusher;
+import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
+import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
+import com.jesse.analyzer.entity.LinuxKernerlEmailEntiy;
+import com.jesse.analyzer.repository.LinuxKernerlEmailRepository;
+import com.jesse.core.components.global_id.GlobalIdConsumer;
+import com.jesse.core.components.imap_connection.SingleImapConnection;
+import com.jesse.core.pojo.PlainTextEmail;
+import com.jesse.core.properties.LKMLRabbitMQProperties;
+import com.jesse.core.utils.ZoneUtils;
 import jakarta.mail.*;
 import jakarta.mail.internet.MimeMultipart;
 import jakarta.mail.search.FlagTerm;
@@ -57,7 +57,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
      */
     private final int PROCESS_BATCH_SIZE = 50;
 
-    /** 表示空 {@link jakarta.mail.Message} 数组的单例。*/
+    /** 表示空 {@link Message} 数组的单例。*/
     private static final
     Message[] EMPTY_MESSAGE_ARRAY = new Message[]{};
 
