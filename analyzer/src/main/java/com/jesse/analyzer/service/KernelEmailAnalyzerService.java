@@ -1,6 +1,6 @@
-package com.jesse.linux_kernel_email_list_analyzer.service;
+package com.jesse.analyzer.service;
 
-import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
+import com.jesse.core.pojo.PlainTextEmail;
 import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.Message;
 
