@@ -1,13 +1,13 @@
-package com.jesse.linux_kernel_email_list_analyzer.service.impl;
+package com.jesse.analyzer.service.impl;
 
-import com.jesse.linux_kernel_email_list_analyzer.components.global_id.GlobalIdConsumer;
-import com.jesse.linux_kernel_email_list_analyzer.components.token_calculate.ModelTokenCalculator;
-import com.jesse.linux_kernel_email_list_analyzer.dto.AIModelAnswerUsageDTO;
-import com.jesse.linux_kernel_email_list_analyzer.entity.AIModelDailyBillingEntity;
-import com.jesse.linux_kernel_email_list_analyzer.repository.AIModelAnswerUsageRepository;
-import com.jesse.linux_kernel_email_list_analyzer.repository.AIModelDailyBillingRepository;
-import com.jesse.linux_kernel_email_list_analyzer.service.AIModelDailyBillingService;
-import com.jesse.linux_kernel_email_list_analyzer.utils.ZoneUtils;
+import com.jesse.analyzer.components.token_calculate.ModelTokenCalculator;
+import com.jesse.analyzer.dto.AIModelAnswerUsageDTO;
+import com.jesse.analyzer.entity.AIModelDailyBillingEntity;
+import com.jesse.analyzer.repository.AIModelAnswerUsageRepository;
+import com.jesse.analyzer.repository.AIModelDailyBillingRepository;
+import com.jesse.analyzer.service.AIModelDailyBillingService;
+import com.jesse.core.components.global_id.GlobalIdConsumer;
+import com.jesse.core.utils.ZoneUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
