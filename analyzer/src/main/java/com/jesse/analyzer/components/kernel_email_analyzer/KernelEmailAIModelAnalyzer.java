@@ -1,8 +1,8 @@
-package com.jesse.linux_kernel_email_list_analyzer.components.kernel_email_analyzer;
+package com.jesse.analyzer.components.kernel_email_analyzer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.PlainTextEmail;
-import com.jesse.linux_kernel_email_list_analyzer.response.AIModelAnswerResponse;
+import com.jesse.analyzer.response.AIModelAnswerResponse;
+import com.jesse.core.pojo.PlainTextEmail;
 
 /** 内核邮件 -> AI 模型 分析器接口类。*/
 public interface KernelEmailAIModelAnalyzer
