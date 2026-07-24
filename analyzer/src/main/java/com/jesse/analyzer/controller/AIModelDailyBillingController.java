@@ -1,7 +1,7 @@
-package com.jesse.linux_kernel_email_list_analyzer.controller;
+package com.jesse.analyzer.controller;
 
-import com.jesse.linux_kernel_email_list_analyzer.response.CustomizedResponse;
-import com.jesse.linux_kernel_email_list_analyzer.service.AIModelDailyBillingService;
+import com.jesse.analyzer.service.AIModelDailyBillingService;
+import com.jesse.core.response.CustomizedResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
