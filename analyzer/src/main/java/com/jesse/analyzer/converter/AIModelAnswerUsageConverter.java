@@ -1,10 +1,10 @@
-package com.jesse.linux_kernel_email_list_analyzer.converter;
+package com.jesse.analyzer.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jesse.linux_kernel_email_list_analyzer.entity.AIModelAnswerUsageEntity;
-import com.jesse.linux_kernel_email_list_analyzer.pojo.ai.AIModelAnswerUsage;
-import com.jesse.linux_kernel_email_list_analyzer.response.AIModelAnswerResponse;
+import com.jesse.analyzer.entity.AIModelAnswerUsageEntity;
+import com.jesse.analyzer.pojo.ai.AIModelAnswerUsage;
+import com.jesse.analyzer.response.AIModelAnswerResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
