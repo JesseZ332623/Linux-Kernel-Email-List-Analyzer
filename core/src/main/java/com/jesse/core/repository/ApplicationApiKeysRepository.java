@@ -1,7 +1,7 @@
-package com.jesse.linux_kernel_email_list_analyzer.repository;
+package com.jesse.core.repository;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.jesse.linux_kernel_email_list_analyzer.entity.ApplicationApiKeys;
+import com.jesse.core.entiity.ApplicationApiKeys;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
