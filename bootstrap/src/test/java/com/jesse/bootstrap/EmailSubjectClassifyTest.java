@@ -4,7 +4,7 @@ package com.jesse.bootstrap;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.jesse.analyzer.components.classifier.KernelEmailClassifier;
-import com.jesse.analyzer.entity.LinuxKernerlEmailEntiy;
+import com.jesse.analyzer.entity.LinuxKernelEmailEntiy;
 import com.jesse.analyzer.repository.LinuxKernerlEmailRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -25,9 +25,9 @@ public class EmailSubjectClassifyTest
     @Test
     public void classifyTest()
     {
-        final Wrapper<LinuxKernerlEmailEntiy> queryCondition
-            = Wrappers.<LinuxKernerlEmailEntiy>lambdaQuery()
-                .select(LinuxKernerlEmailEntiy::getFrom, LinuxKernerlEmailEntiy::getSubject);
+        final Wrapper<LinuxKernelEmailEntiy> queryCondition
+            = Wrappers.<LinuxKernelEmailEntiy>lambdaQuery()
+                .select(LinuxKernelEmailEntiy::getFrom, LinuxKernelEmailEntiy::getSubject);
 
         this.linuxKernerlEmailRepository
             .selectList(queryCondition)
