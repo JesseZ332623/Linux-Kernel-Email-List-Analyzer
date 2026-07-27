@@ -1,0 +1,6 @@
+# Spring StateMachine 属性配置
+
+logging:
+  level:
+    # 屏蔽整个 Spring State Machine 的内部细节
+    org.springframework.statemachine: WARN

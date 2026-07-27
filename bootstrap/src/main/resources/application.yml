@@ -1,0 +1,36 @@
+# 服务主配置类
+
+server:
+  address: 0.0.0.0
+  port: 26543
+  shutdown: graceful
+
+spring:
+  application:
+    name: linux_kernal_email_list_analyzer
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  main:
+    banner-mode: console
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  threads:
+    virtual:
+      enabled: true
+
+  config:
+    import:
+      - classpath:config/log-back.yml
+      - classpath:config/jdbc.yml
+      - classpath:config/email.yml
+      - classpath:config/rabbitmq.yml
+      - classpath:config/deepseek-chat.yml
+      - classpath:config/report-persistence.yml
+      - classpath:config/global-id-consumer.yml
+      - classpath:config/mybatis-plus.yml
+      - classpath:config/time-period.yml
+      - classpath:config/spring-statemachine.yml
