@@ -4,7 +4,7 @@ import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
 import com.jesse.analyzer.components.state_machine.KernelEmailStatus;
 import com.jesse.analyzer.config.KernelEmailStateMachineConfig;
-import com.jesse.analyzer.entity.LinuxKernerlEmailEntiy;
+import com.jesse.analyzer.dto.KernelEmailStatusOnly;
 import com.jesse.analyzer.repository.LinuxKernerlEmailRepository;
 import com.jesse.core.exception.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import java.util.Objects;
 
 import static java.lang.String.format;
 
-/** 内核邮件状态机实现。*/
+/** 内核邮件服务内状态流转状态机实现。*/
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -42,7 +42,7 @@ public class KernelEmailStateMachineImpl implements KernelEmailStateMachine
     private int getCurrentRetryCount()
     {
         return
-        Objects.requireNonNull(RetrySynchronizationManager.getContext(), "Illegal invoke")
+        Objects.requireNonNull(RetrySynchronizationManager.getContext(), "Illegal invocation")
                .getRetryCount() + 1;
     }
 
@@ -52,7 +52,12 @@ public class KernelEmailStateMachineImpl implements KernelEmailStateMachine
     @Retryable(
         retryFor    = OptimisticLockException.class,
         maxAttempts = FIRE_EVENT_MAX_RETRIES,
-        backoff     = @Backoff(delay = 5L, multiplier = 2, maxDelay = 50L)
+        backoff = @Backoff(
+            delay      = 5L,
+            maxDelay   = 50L,
+            multiplier = 2,
+            random     = true
+        )
     )
     public KernelEmailStatus
     fireEvent(long emailId, KernelEmailEvents event)
@@ -66,8 +71,8 @@ public class KernelEmailStateMachineImpl implements KernelEmailStateMachine
         );
 
         // (1) 查询当前这封邮件的状态
-        final LinuxKernerlEmailEntiy kernerlEmail
-            = this.linuxKernerlEmailRepository.selectById(emailId);
+        final KernelEmailStatusOnly emailStatus
+            = this.linuxKernerlEmailRepository.selectStatusAndVersion(emailId);
 
         // (2) 构造新的状态机
         final StateMachine<KernelEmailStatus, KernelEmailEvents>
@@ -81,7 +86,7 @@ public class KernelEmailStateMachineImpl implements KernelEmailStateMachine
             .doWithAllRegions((access) ->
                 access.resetStateMachine(
                     new DefaultStateMachineContext<>(
-                        kernerlEmail.getStatus(), null, null, null
+                        emailStatus.getStatus(), null, null, null
                     )
                 )
             );
@@ -89,7 +94,7 @@ public class KernelEmailStateMachineImpl implements KernelEmailStateMachine
         // (5) 重新启动状态机
         stateMachine.start();
 
-        final KernelEmailStatus currentStatus = kernerlEmail.getStatus();
+        final KernelEmailStatus currentStatus = emailStatus.getStatus();
 
         log.info(
             "Drive status isolation for kernel email: {} " +
@@ -105,7 +110,7 @@ public class KernelEmailStateMachineImpl implements KernelEmailStateMachine
                 format(
                     "Status flow rejection. Current status: %s not accept event: %s) " +
                     "(Kernel email id: %d, retry attempt: %d / %d)",
-                    kernerlEmail.getStatus(), event.name(),
+                    emailStatus.getStatus(), event.name(),
                     emailId, retryCount, FIRE_EVENT_MAX_RETRIES
                 )
             );
@@ -113,11 +118,16 @@ public class KernelEmailStateMachineImpl implements KernelEmailStateMachine
 
         final KernelEmailStatus newStatus = stateMachine.getState().getId();
 
-        kernerlEmail.setStatus(newStatus);
+        emailStatus.setStatus(newStatus);
 
         // (7) 将新状态写回数据库
         final int updated
-            = this.linuxKernerlEmailRepository.updateById(kernerlEmail);
+            = this.linuxKernerlEmailRepository
+                  .updateStatusWithOptimisticLock(
+                      emailId,
+                      currentStatus.getCode(), newStatus.getCode(),
+                      emailStatus.getVersion()
+                  );
 
         // 如果写入时抢不到乐观锁，就抛异常然后重试
         if (updated == 0)
