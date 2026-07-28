@@ -153,9 +153,15 @@ public class AIModelDailyBillingServiceImpl implements AIModelDailyBillingServic
                 = this.aiModelAnswerUsageRepository
                       .getDailyUsageGroupByModel(startOfDay, endOfDay);
 
-            // 如果昨日没有任何 Token 消耗记录，构造空记录并插入即可
+            // 如果昨日没有任何 Token 消耗记录
             if (CollectionUtils.isEmpty(dailyUsage))
             {
+                // 如果已经有记录了（比如同一天内反复调用），直接返回
+                if (this.aiModelDailyBillingRepository.hasBillRecordByDate(yesterday)) {
+                    return yesterday;
+                }
+
+                // 构造空记录并插入即可
                 final long nextId = this.globalIdConsumer.nextId();
 
                 this.aiModelDailyBillingRepository
