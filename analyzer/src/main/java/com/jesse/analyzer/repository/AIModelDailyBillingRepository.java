@@ -5,6 +5,9 @@ import com.jesse.analyzer.entity.AIModelDailyBillingEntity;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+import java.time.LocalDate;
 
 /** AI 模型 token 资费消耗每日汇总表仓储类。*/
 @Mapper
@@ -52,4 +55,15 @@ public interface AIModelDailyBillingRepository
             create_at                      = VALUES(create_at)
     """)
     int upsertBilling(@Param("entity") AIModelDailyBillingEntity entity);
+
+    /** 查询汇总日期下是否存在 Token 消耗汇总记录。*/
+    @Select("""
+        SELECT EXISTS (
+            SELECT 1
+            FROM ai_model_daily_billing
+            WHERE
+                billing_date = #{billingDate}
+        ) AS has_bill_record
+    """)
+    boolean hasBillRecordByDate(@Param("billingDate") LocalDate billingDate);
 }
