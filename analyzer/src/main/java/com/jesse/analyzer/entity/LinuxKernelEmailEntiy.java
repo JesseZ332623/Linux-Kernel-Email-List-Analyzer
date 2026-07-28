@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode
 @NoArgsConstructor
 @TableName("linux_kernal_email")
-public class LinuxKernerlEmailEntiy
+public class LinuxKernelEmailEntiy
 {
     @TableId(type = IdType.INPUT)
     private Long id;
@@ -56,10 +56,10 @@ public class LinuxKernerlEmailEntiy
     private LocalDateTime createAt;
 
     /** 插入一条新内核邮件数据调用本方法构造实体。*/
-    public static LinuxKernerlEmailEntiy
+    public static LinuxKernelEmailEntiy
     fromPlainTextEmail(Long nextId, PlainTextEmail email)
     {
-        final LinuxKernerlEmailEntiy lkml = new LinuxKernerlEmailEntiy();
+        final LinuxKernelEmailEntiy lkml = new LinuxKernelEmailEntiy();
 
         lkml.setId(nextId);
         lkml.setTaskId("");
@@ -67,7 +67,7 @@ public class LinuxKernerlEmailEntiy
         // 默认状态
         lkml.setStatus(KernelEmailStatus.FETCHED);
 
-        BeanUtils.copyProperties(email, lkml, LinuxKernerlEmailEntiy.class);
+        BeanUtils.copyProperties(email, lkml, LinuxKernelEmailEntiy.class);
 
         return lkml;
     }

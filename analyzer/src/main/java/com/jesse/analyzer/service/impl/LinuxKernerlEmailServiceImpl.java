@@ -2,7 +2,7 @@ package com.jesse.analyzer.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jesse.analyzer.components.state_machine.KernelEmailStatus;
-import com.jesse.analyzer.entity.LinuxKernerlEmailEntiy;
+import com.jesse.analyzer.entity.LinuxKernelEmailEntiy;
 import com.jesse.analyzer.repository.LinuxKernerlEmailRepository;
 import com.jesse.analyzer.service.LinuxKernerlEmailService;
 import com.jesse.core.components.global_id.GlobalIdConsumer;
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class LinuxKernerlEmailServiceImpl
-    extends ServiceImpl<LinuxKernerlEmailRepository, LinuxKernerlEmailEntiy>
+    extends ServiceImpl<LinuxKernerlEmailRepository, LinuxKernelEmailEntiy>
     implements LinuxKernerlEmailService
 {
     /** 全局 ID 消费机接口。*/
@@ -31,8 +31,8 @@ public class LinuxKernerlEmailServiceImpl
     {
         final long nextId = this.idConsumer.nextId();
 
-        final LinuxKernerlEmailEntiy lkml
-            = LinuxKernerlEmailEntiy
+        final LinuxKernelEmailEntiy lkml
+            = LinuxKernelEmailEntiy
                 .fromPlainTextEmail(nextId, email);
 
         this.baseMapper.insert(lkml);
