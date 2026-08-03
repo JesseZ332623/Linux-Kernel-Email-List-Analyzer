@@ -1,4 +1,4 @@
-package com.jesse.analyzer.pojo.ai.sse;
+package com.jesse.core.pojo.ai.sse;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
