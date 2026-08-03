@@ -1,6 +1,6 @@
 package com.jesse.analyzer.components.analyze_report_generator;
 
-import com.jesse.analyzer.pojo.AnalyzeResultTemplateData;
+import com.jesse.core.pojo.AnalyzeResultTemplateData;
 
 /** LKML 内核补丁邮件分析结果生成器接口。*/
 public interface LKMLAnalyzeTemplateGenerator
