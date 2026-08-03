@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.jesse</groupId>
+        <artifactId>linux_kernel_email_list_analyzer</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>analyze_report_discuss</artifactId>
+    <packaging>jar</packaging>
+
+    <description>
+        内核邮件分析报告答疑解惑
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.jesse</groupId>
+            <artifactId>core</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.jesse</groupId>
+            <artifactId>model_response_audit</artifactId>
+            <version>${revision}</version>
+        </dependency>
+    </dependencies>
+
+</project>
