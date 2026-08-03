@@ -1,7 +1,7 @@
-package com.jesse.analyzer.components.token_calculate.impl;
+package com.jesse.response_audit.components.token_calculate.impl;
 
-import com.jesse.analyzer.components.token_calculate.ModelTokenCalculator;
-import com.jesse.analyzer.dto.AIModelAnswerUsageDTO;
+import com.jesse.core.dto.AIModelAnswerUsageDTO;
+import com.jesse.response_audit.components.token_calculate.ModelTokenCalculator;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
