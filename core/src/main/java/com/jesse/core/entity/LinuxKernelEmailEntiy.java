@@ -1,7 +1,7 @@
-package com.jesse.analyzer.entity;
+package com.jesse.core.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.jesse.analyzer.components.state_machine.KernelEmailStatus;
+import com.jesse.core.enums.KernelEmailStatus;
 import com.jesse.core.pojo.PlainTextEmail;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
