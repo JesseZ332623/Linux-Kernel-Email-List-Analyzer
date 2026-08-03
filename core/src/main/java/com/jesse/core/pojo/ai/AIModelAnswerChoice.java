@@ -1,10 +1,7 @@
-package com.jesse.analyzer.pojo.ai;
+package com.jesse.core.pojo.ai;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 /**
  * AI 模型回复消息选择类，JSON 示例：
@@ -22,6 +19,7 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @NoArgsConstructor
+@AllArgsConstructor
 public class AIModelAnswerChoice
 {
     /** 结果索引，通常为 0 */
