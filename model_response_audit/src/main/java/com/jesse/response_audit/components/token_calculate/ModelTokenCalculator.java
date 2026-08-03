@@ -1,6 +1,6 @@
-package com.jesse.analyzer.components.token_calculate;
+package com.jesse.response_audit.components.token_calculate;
 
-import com.jesse.analyzer.dto.AIModelAnswerUsageDTO;
+import com.jesse.core.dto.AIModelAnswerUsageDTO;
 
 import java.math.BigDecimal;
 
