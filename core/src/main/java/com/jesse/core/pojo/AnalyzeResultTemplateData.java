@@ -1,7 +1,6 @@
-package com.jesse.analyzer.pojo;
+package com.jesse.core.pojo;
 
-import com.jesse.analyzer.response.AIModelAnswerResponse;
-import com.jesse.core.pojo.PlainTextEmail;
+import com.jesse.core.response.AIModelAnswerResponse;
 import lombok.*;
 
 /** 内核邮件分析模板数据类。*/
