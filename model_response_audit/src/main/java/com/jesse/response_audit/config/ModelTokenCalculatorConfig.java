@@ -1,8 +1,8 @@
-package com.jesse.analyzer.config;
+package com.jesse.response_audit.config;
 
-import com.jesse.analyzer.components.token_calculate.ModelTokenCalculator;
-import com.jesse.analyzer.components.token_calculate.impl.DeepSeekV4FlashTokenCalculator;
-import com.jesse.analyzer.components.token_calculate.impl.DeepSeekV4ProTokenCalculator;
+import com.jesse.response_audit.components.token_calculate.ModelTokenCalculator;
+import com.jesse.response_audit.components.token_calculate.impl.DeepSeekV4FlashTokenCalculator;
+import com.jesse.response_audit.components.token_calculate.impl.DeepSeekV4ProTokenCalculator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
