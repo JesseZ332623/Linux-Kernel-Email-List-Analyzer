@@ -1,9 +1,9 @@
-package com.jesse.analyzer.response;
+package com.jesse.core.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.jesse.analyzer.pojo.ai.AIModelAnswerChoice;
-import com.jesse.analyzer.pojo.ai.AIModelAnswerUsage;
-import com.jesse.analyzer.response.base.AIModelAnswerBaseResponse;
+import com.jesse.core.pojo.ai.AIModelAnswerChoice;
+import com.jesse.core.pojo.ai.AIModelAnswerUsage;
+import com.jesse.core.response.base.AIModelAnswerBaseResponse;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
