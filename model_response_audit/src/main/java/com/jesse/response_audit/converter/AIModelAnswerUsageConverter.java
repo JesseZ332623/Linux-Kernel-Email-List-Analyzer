@@ -1,10 +1,10 @@
-package com.jesse.analyzer.converter;
+package com.jesse.response_audit.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jesse.analyzer.entity.AIModelAnswerUsageEntity;
-import com.jesse.analyzer.pojo.ai.AIModelAnswerUsage;
-import com.jesse.analyzer.response.AIModelAnswerResponse;
+import com.jesse.core.entity.AIModelAnswerUsageEntity;
+import com.jesse.core.pojo.ai.AIModelAnswerUsage;
+import com.jesse.core.response.AIModelAnswerResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
