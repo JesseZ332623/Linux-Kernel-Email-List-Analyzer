@@ -1,8 +1,8 @@
-package com.jesse.analyzer.request;
+package com.jesse.core.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.jesse.analyzer.pojo.ai.AIModelChatMessage;
-import com.jesse.analyzer.pojo.ai.AIModelChatThinking;
+import com.jesse.core.pojo.ai.AIModelChatMessage;
+import com.jesse.core.pojo.ai.AIModelChatThinking;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
