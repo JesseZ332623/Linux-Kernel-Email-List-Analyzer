@@ -1,8 +1,8 @@
-package com.jesse.analyzer.converter;
+package com.jesse.response_audit.converter;
 
-import com.jesse.analyzer.entity.AIModelAnswerContentEntity;
-import com.jesse.analyzer.pojo.ai.AIModelAnswerMessage;
-import com.jesse.analyzer.response.AIModelAnswerResponse;
+import com.jesse.core.entity.AIModelAnswerContentEntity;
+import com.jesse.core.pojo.ai.AIModelAnswerMessage;
+import com.jesse.core.response.AIModelAnswerResponse;
 import org.springframework.stereotype.Component;
 
 /** AI 模型 LKML 分析任务模型文本输出实体转换器。*/
