@@ -101,3 +101,32 @@ COLLATE=utf8mb4_0900_ai_ci
 ROW_FORMAT=COMPRESSED
 KEY_BLOCK_SIZE=8
 COMMENT='内核邮件数据表';
+
+CREATE TABLE `ai_analyze_discuss_session` (
+  `id` 		   BIGINT NOT NULL,
+  `session_id` CHAR(36) NOT NULL   COMMENT   '会话 ID',
+  `task_id`    CHAR(36) NOT NULL   COMMENT   '本次大模型请求的唯一标识符，一封邮件的分析报告下可以发起多次会话讨论（一对多）',
+  `title` 	   MEDIUMTEXT NOT NULL COMMENT '会话标题',
+  `create_at`  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '会话创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `session_id_UNIQUE` (`session_id`)
+) 
+ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_0900_ai_ci
+COMMENT='Linux 内核邮件分析报告疑惑解答会话表';
+
+CREATE TABLE `ai_analyze_discuss_session_details` (
+  `id` 	       	      BIGINT   NOT NULL,
+  `session_id` 	      CHAR(36) NOT NULL     COMMENT '会话 ID',
+  `question`          MEDIUMTEXT            COMMENT '用户提出的问题',
+  `model_response_id` CHAR(36) DEFAULT NULL COMMENT '模型本次响应 UUID',
+  `create_at` 	      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '本次问答记录创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `model_response_id_UNIQUE` (`model_response_id`),
+  KEY `session_id_idx` (`session_id`) USING BTREE
+) 
+ENGINE=InnoDB 
+DEFAULT CHARSET=utf8mb4 
+COLLATE=utf8mb4_0900_ai_ci 
+COMMENT='Linux 内核邮件分析报告疑惑解答会话对话明细表';
