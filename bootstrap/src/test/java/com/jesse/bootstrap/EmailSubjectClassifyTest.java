@@ -4,7 +4,7 @@ package com.jesse.bootstrap;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.jesse.analyzer.components.classifier.KernelEmailClassifier;
-import com.jesse.analyzer.entity.LinuxKernelEmailEntiy;
+import com.jesse.core.entity.LinuxKernelEmailEntiy;
 import com.jesse.analyzer.repository.LinuxKernerlEmailRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
