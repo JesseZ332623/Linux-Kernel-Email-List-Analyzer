@@ -1,10 +1,7 @@
-package com.jesse.analyzer.pojo.ai;
+package com.jesse.core.pojo.ai;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 /**
  * AI 模型回复消息类，JSON 示例如下：
@@ -21,6 +18,7 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @NoArgsConstructor
+@AllArgsConstructor
 public class AIModelAnswerMessage
 {
     /** 固定为 "assistant"，表示这是AI的回复 */
