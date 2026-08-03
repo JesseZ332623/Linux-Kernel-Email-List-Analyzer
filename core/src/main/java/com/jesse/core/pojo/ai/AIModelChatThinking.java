@@ -1,4 +1,4 @@
-package com.jesse.analyzer.pojo.ai;
+package com.jesse.core.pojo.ai;
 
 import lombok.*;
 
