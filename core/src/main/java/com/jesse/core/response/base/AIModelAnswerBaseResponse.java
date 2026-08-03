@@ -1,4 +1,4 @@
-package com.jesse.analyzer.response.base;
+package com.jesse.core.response.base;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
