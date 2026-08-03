@@ -1,4 +1,4 @@
-package com.jesse.analyzer.dto;
+package com.jesse.core.dto;
 
 import lombok.*;
 
