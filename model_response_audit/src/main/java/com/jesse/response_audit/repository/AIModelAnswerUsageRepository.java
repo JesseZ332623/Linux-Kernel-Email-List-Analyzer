@@ -1,8 +1,8 @@
-package com.jesse.analyzer.repository;
+package com.jesse.response_audit.repository;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.jesse.analyzer.dto.AIModelAnswerUsageDTO;
-import com.jesse.analyzer.entity.AIModelAnswerUsageEntity;
+import com.jesse.core.dto.AIModelAnswerUsageDTO;
+import com.jesse.core.entity.AIModelAnswerUsageEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
