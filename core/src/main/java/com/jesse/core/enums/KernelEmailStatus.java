@@ -1,4 +1,4 @@
-package com.jesse.analyzer.components.state_machine;
+package com.jesse.core.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.Getter;
