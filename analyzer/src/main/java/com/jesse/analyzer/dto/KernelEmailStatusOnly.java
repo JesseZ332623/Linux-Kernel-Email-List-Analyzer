@@ -1,6 +1,6 @@
 package com.jesse.analyzer.dto;
 
-import com.jesse.analyzer.components.state_machine.KernelEmailStatus;
+import com.jesse.core.enums.KernelEmailStatus;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
