@@ -4,6 +4,6 @@ package com.jesse.analyzer.components.state_machine;
 public interface KernelEmailStateMachine
 {
     /** 对指定邮件触发一个事件，驱动状态流转。*/
-    KernelEmailStatus
+    com.jesse.core.enums.KernelEmailStatus
     fireEvent(long emailId, KernelEmailEvents event);
 }
