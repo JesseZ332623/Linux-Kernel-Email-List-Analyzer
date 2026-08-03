@@ -1,9 +1,9 @@
 package com.jesse.analyzer.repository;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.jesse.analyzer.components.state_machine.KernelEmailStatus;
+import com.jesse.core.enums.KernelEmailStatus;
 import com.jesse.analyzer.dto.KernelEmailStatusOnly;
-import com.jesse.analyzer.entity.LinuxKernelEmailEntiy;
+import com.jesse.core.entity.LinuxKernelEmailEntiy;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
