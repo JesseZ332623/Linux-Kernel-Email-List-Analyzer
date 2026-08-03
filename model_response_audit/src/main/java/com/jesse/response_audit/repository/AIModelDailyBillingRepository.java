@@ -1,7 +1,7 @@
-package com.jesse.analyzer.repository;
+package com.jesse.response_audit.repository;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.jesse.analyzer.entity.AIModelDailyBillingEntity;
+import com.jesse.core.entity.AIModelDailyBillingEntity;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
