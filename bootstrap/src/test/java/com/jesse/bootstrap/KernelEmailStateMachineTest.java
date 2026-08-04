@@ -2,9 +2,9 @@ package com.jesse.bootstrap;
 
 import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
-import com.jesse.analyzer.components.state_machine.KernelEmailStatus;
+import com.jesse.core.enums.KernelEmailStatus;
 import com.jesse.analyzer.components.state_machine.impl.KernelEmailStateMachineImpl;
-import com.jesse.analyzer.entity.LinuxKernelEmailEntiy;
+import com.jesse.core.entity.LinuxKernelEmailEntiy;
 import com.jesse.analyzer.service.LinuxKernerlEmailService;
 import com.jesse.core.components.global_id.GlobalIdConsumer;
 import com.jesse.core.pojo.PlainTextEmail;

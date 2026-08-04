@@ -2,7 +2,7 @@ package com.jesse.analyzer.components.state_machine.impl;
 
 import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
-import com.jesse.analyzer.components.state_machine.KernelEmailStatus;
+import com.jesse.core.enums.KernelEmailStatus;
 import com.jesse.analyzer.config.KernelEmailStateMachineConfig;
 import com.jesse.analyzer.dto.KernelEmailStatusOnly;
 import com.jesse.analyzer.repository.LinuxKernerlEmailRepository;

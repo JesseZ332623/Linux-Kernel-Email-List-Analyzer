@@ -1,8 +1,8 @@
 package com.jesse.analyzer.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.jesse.analyzer.components.state_machine.KernelEmailStatus;
-import com.jesse.analyzer.entity.LinuxKernelEmailEntiy;
+import com.jesse.core.enums.KernelEmailStatus;
+import com.jesse.core.entity.LinuxKernelEmailEntiy;
 import com.jesse.analyzer.repository.LinuxKernerlEmailRepository;
 import com.jesse.analyzer.service.LinuxKernerlEmailService;
 import com.jesse.core.components.global_id.GlobalIdConsumer;

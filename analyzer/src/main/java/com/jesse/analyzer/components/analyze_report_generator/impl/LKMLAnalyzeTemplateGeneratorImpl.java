@@ -3,7 +3,7 @@ package com.jesse.analyzer.components.analyze_report_generator.impl;
 import com.jesse.analyzer.components.analyze_report_generator.LKMLAnalyzeTemplateGenerator;
 import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
-import com.jesse.analyzer.pojo.AnalyzeResultTemplateData;
+import com.jesse.core.pojo.AnalyzeResultTemplateData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

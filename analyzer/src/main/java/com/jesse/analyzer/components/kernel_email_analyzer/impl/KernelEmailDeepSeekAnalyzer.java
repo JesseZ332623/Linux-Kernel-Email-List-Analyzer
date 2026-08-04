@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jesse.analyzer.components.kernel_email_analyzer.KernelEmailAIModelAnalyzer;
 import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
-import com.jesse.analyzer.pojo.ai.AIModelChatMessage;
-import com.jesse.analyzer.pojo.ai.AIModelChatThinking;
-import com.jesse.analyzer.request.AIModelChatRequest;
-import com.jesse.analyzer.response.AIModelAnswerResponse;
+import com.jesse.core.pojo.ai.AIModelChatMessage;
+import com.jesse.core.pojo.ai.AIModelChatThinking;
+import com.jesse.core.request.AIModelChatRequest;
+import com.jesse.core.response.AIModelAnswerResponse;
 import com.jesse.analyzer.service.LinuxKernerlEmailService;
 import com.jesse.core.annotation.TimeMonitor;
 import com.jesse.core.pojo.PlainTextEmail;
@@ -165,7 +165,7 @@ public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
             // (3) 解析响应体
             final AIModelAnswerResponse analyzeResponse
                 = this.objectMapper
-                .readValue(responseJSON, AIModelAnswerResponse.class);
+                      .readValue(responseJSON, AIModelAnswerResponse.class);
 
             // (4) 将指定 id 的邮件与指定的分析任务关联
             this.linuxKernerlEmailService

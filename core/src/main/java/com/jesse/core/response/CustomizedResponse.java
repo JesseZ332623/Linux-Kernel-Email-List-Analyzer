@@ -2,14 +2,12 @@ package com.jesse.core.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
 /** 自定义通用响应体。*/
 @Getter
-@Builder
 @RequiredArgsConstructor
 public class CustomizedResponse<T>
 {

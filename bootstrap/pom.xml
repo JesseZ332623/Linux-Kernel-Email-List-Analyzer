@@ -24,6 +24,12 @@
             <artifactId>analyzer</artifactId>
             <version>${revision}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.jesse</groupId>
+            <artifactId>analyze_report_discuss</artifactId>
+            <version>${revision}</version>
+        </dependency>
     </dependencies>
 
     <build>

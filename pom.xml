@@ -20,7 +20,9 @@
 		<module>core</module>
 		<module>analyzer</module>
 		<module>bootstrap</module>
-	</modules>
+        <module>analyze_report_discuss</module>
+        <module>model_response_audit</module>
+    </modules>
 
 	<properties>
 		<revision>1.0.0</revision>

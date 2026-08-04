@@ -3,7 +3,7 @@ package com.jesse.analyzer.components.kernel_email_pusher.impl;
 import com.jesse.analyzer.components.kernel_email_pusher.KernelEmailPusher;
 import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
-import com.jesse.analyzer.entity.LinuxKernelEmailEntiy;
+import com.jesse.core.entity.LinuxKernelEmailEntiy;
 import com.jesse.analyzer.repository.LinuxKernerlEmailRepository;
 import com.jesse.core.components.global_id.GlobalIdConsumer;
 import com.jesse.core.components.imap_connection.SingleImapConnection;

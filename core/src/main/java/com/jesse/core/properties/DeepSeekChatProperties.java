@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @ToString
 @EqualsAndHashCode
 @Component
-@ConfigurationProperties(prefix = "app.deepseek-chat")
+@ConfigurationProperties(prefix = "app.deepseek-chat.lkml-analyzer")
 public class DeepSeekChatProperties
 {
     /** AI 模型对话端点 */

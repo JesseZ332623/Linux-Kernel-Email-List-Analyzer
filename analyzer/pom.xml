@@ -18,6 +18,12 @@
             <artifactId>core</artifactId>
             <version>${revision}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.jesse</groupId>
+            <artifactId>model_response_audit</artifactId>
+            <version>${revision}</version>
+        </dependency>
     </dependencies>
 
 </project>

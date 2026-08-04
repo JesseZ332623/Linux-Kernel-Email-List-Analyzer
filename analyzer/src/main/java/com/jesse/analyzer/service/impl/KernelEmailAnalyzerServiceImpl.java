@@ -5,11 +5,11 @@ import com.jesse.analyzer.components.kernel_email_analyzer.KernelEmailAIModelAna
 import com.jesse.analyzer.components.report_persistence.LKMLAnalyzeReportWriter;
 import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
-import com.jesse.analyzer.pojo.AnalyzeResultTemplateData;
-import com.jesse.analyzer.response.AIModelAnswerResponse;
-import com.jesse.analyzer.service.AIModelAnswerAuditService;
+import com.jesse.core.pojo.AnalyzeResultTemplateData;
+import com.jesse.core.response.AIModelAnswerResponse;
 import com.jesse.analyzer.service.KernelEmailAnalyzerService;
 import com.jesse.core.pojo.PlainTextEmail;
+import com.jesse.response_audit.service.AIModelAnswerAuditService;
 import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,7 +72,7 @@ public class KernelEmailAnalyzerServiceImpl implements KernelEmailAnalyzerServic
                           .doAnalyze(kernelEmailId, kernelEmail);
 
                 // (3) 审计本次分析的信息
-                this.aiModelAnswerAuditService.save(kernelEmail, response);
+                this.aiModelAnswerAuditService.save(response);
 
                 // (4) 生成分析报告
                 final String htmlText

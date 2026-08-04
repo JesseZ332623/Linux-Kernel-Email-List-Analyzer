@@ -26,6 +26,7 @@ spring:
     import:
       - classpath:config/log-back.yml
       - classpath:config/jdbc.yml
+      - classpath:config/redis.yml
       - classpath:config/email.yml
       - classpath:config/rabbitmq.yml
       - classpath:config/deepseek-chat.yml

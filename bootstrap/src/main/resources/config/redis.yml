@@ -1,0 +1,42 @@
+# Redis 与缓存业务属性配置文件
+
+spring:
+  redis:
+    lettuce:
+      pool:
+        enabled: true            # 使用连接池
+        max-active: 20           # 最大活跃连接数
+        max-idle: 10             # 最大空闲连接数
+        min-idle: 5              # 最小空闲连接数
+        max-wait: 2000ms         # 等待连接的最大时间，超时抛异常
+
+app:
+  redis:
+    host: localhost
+    port: 6379
+    username: Jesse
+    password: 1234567890
+    database: 0
+
+  # 内核邮件分析报告文本缓存属性
+  analyze-report-cache:
+    # 内核邮件分析报告缓存键前缀
+    # key 示例：lkml:analyze-report:223ce1a0-3f2c-41a4-b1b4-d67c2df10eb1
+    # 后面拼接的分析报告 ID
+    analyze-report-key-prefix: "lkml:analyze-report:"
+
+    # 讨论摘要文本缓存键前缀
+    # key 示例：lkml:discuss-abstract:ddbcbcbf-4dda-4650-aabf-d4c39ebc9551
+    # 后面拼接的是会话 ID
+    discuss-abstract-key-prefix: "lkml:discuss-abstract:"
+
+    # 缓存有效期
+    expire: 7d
+
+    # 缓存击穿后的锁等待时间
+    lock-wait-time: 5s
+
+#logging:
+#  level:
+#    org.springframework.data.redis: DEBUG
+#    io.lettuce.core: DEBUG
