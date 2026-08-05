@@ -41,6 +41,7 @@ public class AnalyzeReportDiscussSessionServiceImpl
     private final
     KenelEmailAnalyzeReportCacher kenelEmailAnalyzeReportCacher;
 
+    /** Linux 内核邮件分析报告疑惑解答会话对话内容表仓储类。*/
     private final
     AnalyzeReportDiscussSessionDetailsRepository analyzeReportDiscussSessionDetailsRepository;
 
