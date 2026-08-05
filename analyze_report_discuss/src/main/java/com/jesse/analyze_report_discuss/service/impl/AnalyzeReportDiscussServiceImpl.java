@@ -21,8 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.concurrent.ExecutorService;
 
 /** 内核邮件分析报告讨论服务实现。*/
 @Slf4j
@@ -71,6 +74,11 @@ public class AnalyzeReportDiscussServiceImpl
     private final
     DeepSeekAnalyzerReportDiscussProperties properties;
 
+    /** 内核邮件分析报告讨论专用虚拟线程池执行器。*/
+    @Qualifier("analyze-report-discuss-executor")
+    private final
+    ExecutorService analyzeReportDiscussExecutor;
+
     /** 构建异步响应处理回调实例。*/
     private Callback newSSECallback(
         final Long                 sessionDetailId,
@@ -86,7 +94,8 @@ public class AnalyzeReportDiscussServiceImpl
             this.objectMapper,
             this.discussSessionDetailsService,
             this.aiModelAnswerAuditService,
-            this.analyzeReportDiscussAbstractor
+            this.analyzeReportDiscussAbstractor,
+            this.analyzeReportDiscussExecutor
         );
     }
 
