@@ -3,6 +3,7 @@ package com.jesse.analyze_report_discuss.components.sse_callback;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jesse.analyze_report_discuss.components.discuss_abstract.AnalyzeReportDiscussAbstractor;
+import com.jesse.analyze_report_discuss.components.discuss_session_lock.DiscussSessionLockGurard;
 import com.jesse.analyze_report_discuss.request.DiscussAbstractReqest;
 import com.jesse.analyze_report_discuss.request.ReportDiscussRequest;
 import com.jesse.analyze_report_discuss.service.AnalyzeReportDiscussSessionDetailsService;
@@ -76,6 +77,10 @@ public class SSECallBack implements Callback
     private final
     ExecutorService analyzeReportDiscussExecutor;
 
+    /** 讨论会话锁管理器接口。*/
+    private final
+    DiscussSessionLockGurard discussSessionLockGurard;
+
     /** 每次发起 Stream 模式调用的时候，构造本回调的实例。*/
     public static SSECallBack create(
         final Long                 sessionDetailId,
@@ -83,9 +88,10 @@ public class SSECallBack implements Callback
         final SseEmitter           sseEmitter,
         final ObjectMapper         objectMapper,
         final AnalyzeReportDiscussSessionDetailsService discussSessionDetailsService,
-        final AIModelAnswerAuditService aiModelAnswerAuditService,
-        final AnalyzeReportDiscussAbstractor analyzeReportDiscussAbstractor,
-        final ExecutorService executorService
+        final AIModelAnswerAuditService                 aiModelAnswerAuditService,
+        final AnalyzeReportDiscussAbstractor            analyzeReportDiscussAbstractor,
+        final ExecutorService                           executorService,
+        final DiscussSessionLockGurard                  discussSessionLockGurard
     )
     {
         final ResponseChunkHandler responseChunkHandler
@@ -101,7 +107,8 @@ public class SSECallBack implements Callback
             discussSessionDetailsService,
             analyzeReportDiscussAbstractor,
             responseChunkHandler,
-            executorService
+            executorService,
+            discussSessionLockGurard
         );
     }
 
@@ -299,6 +306,7 @@ public class SSECallBack implements Callback
 
         try
         {
+            // 将各个任务写到 Map 中去统一管理
             final Map<String, CompletableFuture<String>> taskMap
                 = Map.of(
                     "save audit",         saveAudit,
@@ -306,9 +314,11 @@ public class SSECallBack implements Callback
                     "discuss abstract",   discussAbstract
                 );
 
+            // 等待所有任务完成
             CompletableFuture.allOf(taskMap.values().toArray(CompletableFuture[]::new))
                 .get(10, TimeUnit.SECONDS);
 
+            // 收集各个任务的执行状态
             final String executeResultInfo
                 = taskMap.entrySet().stream()
                     .map((entry) ->
@@ -351,6 +361,12 @@ public class SSECallBack implements Callback
         }
         catch (IOException ioException) {
             this.sseEmitter.completeWithError(ioException);
+        }
+        finally
+        {
+            // 失败了也不要忘记释放锁
+            this.discussSessionLockGurard
+                .release(this.discussRequest.getSessionId());
         }
 
         final Request request = call.request();
@@ -405,6 +421,12 @@ public class SSECallBack implements Callback
             // 收集完所有的响应数据片后，再统一作审计信息持久化。
             this.agregateResponseChunks(chunks)
                 .ifPresent(this::auditAndAbstract);
+        }
+        finally
+        {
+            // 最后释放锁，表示本会话可以开始下一轮讨论了
+            this.discussSessionLockGurard
+                .release(this.discussRequest.getSessionId());
         }
     }
 }
