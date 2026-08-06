@@ -1,5 +1,6 @@
 package com.jesse.analyze_report_discuss.controller;
 
+import com.jesse.analyze_report_discuss.exception.DiscussException;
 import com.jesse.analyze_report_discuss.request.ReportDiscussRequest;
 import com.jesse.analyze_report_discuss.service.AnalyzeReportDiscussService;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.io.IOException;
+import java.util.Map;
 
 /** 内核邮件分析报告讨论控制器。*/
 @Slf4j
@@ -50,6 +54,34 @@ public class AnalyzeReportDiscussController
         return emitter;
     }
 
+    /**
+     * 处理异步响应处理回调开始前所抛出的异常
+     *（比如锁占用，提示词文件不存在等）。
+     */
+    private void
+    handleSyncError(SseEmitter emitter, DiscussException discussException)
+    {
+        try
+        {
+            final Map<String, String> errorData
+                = Map.of(
+                    "type", "Discuss Error",
+                    "message", discussException.getMessage()
+                );
+
+            final SseEmitter.SseEventBuilder errorEvent
+                = SseEmitter.event()
+                    .name("error")
+                    .data(errorData);
+
+            emitter.send(errorEvent);
+            emitter.complete();
+        }
+        catch (IOException exception) {
+            emitter.completeWithError(exception);
+        }
+    }
+
     /** 在某个分析报告的会话下发起一次讨论。*/
     @PostMapping(path = "/discuss")
     public SseEmitter
@@ -58,7 +90,24 @@ public class AnalyzeReportDiscussController
         final long timestamp        = System.currentTimeMillis();
         final SseEmitter sseEmitter = newSseEmitter(request, timestamp);
 
-        this.analyzeReportDiscussService.discuss(request, sseEmitter);
+        try {
+            this.analyzeReportDiscussService.discuss(request, sseEmitter);
+        }
+        catch (DiscussException discussException) {
+            this.handleSyncError(sseEmitter, discussException);
+        }
+        catch (Exception exception)
+        {
+            log.error(
+                "Unexcepted error during discuss initialization.",
+                exception
+            );
+
+            this.handleSyncError(
+                sseEmitter,
+                new DiscussException("Internal server error")
+            );
+        }
 
         return sseEmitter;
     }

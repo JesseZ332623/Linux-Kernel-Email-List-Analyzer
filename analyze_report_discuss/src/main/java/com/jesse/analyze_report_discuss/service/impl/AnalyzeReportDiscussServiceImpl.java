@@ -2,6 +2,7 @@ package com.jesse.analyze_report_discuss.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jesse.analyze_report_discuss.components.discuss_abstract.AnalyzeReportDiscussAbstractor;
+import com.jesse.analyze_report_discuss.components.discuss_session_lock.DiscussSessionLockGurard;
 import com.jesse.analyze_report_discuss.components.prompt_reader.ModelPromptReader;
 import com.jesse.analyze_report_discuss.components.report_cache.AnalyzerReportDiscussAbstractCacher;
 import com.jesse.analyze_report_discuss.components.report_cache.KenelEmailAnalyzeReportCacher;
@@ -26,6 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.concurrent.ExecutorService;
+
+import static java.lang.String.format;
 
 /** 内核邮件分析报告讨论服务实现。*/
 @Slf4j
@@ -79,6 +82,10 @@ public class AnalyzeReportDiscussServiceImpl
     private final
     ExecutorService analyzeReportDiscussExecutor;
 
+    /** 讨论会话锁管理器接口。*/
+    private final
+    DiscussSessionLockGurard discussSessionLockGurard;
+
     /** 构建异步响应处理回调实例。*/
     private Callback newSSECallback(
         final Long                 sessionDetailId,
@@ -95,7 +102,8 @@ public class AnalyzeReportDiscussServiceImpl
             this.discussSessionDetailsService,
             this.aiModelAnswerAuditService,
             this.analyzeReportDiscussAbstractor,
-            this.analyzeReportDiscussExecutor
+            this.analyzeReportDiscussExecutor,
+            this.discussSessionLockGurard
         );
     }
 
@@ -104,6 +112,20 @@ public class AnalyzeReportDiscussServiceImpl
     public void
     discuss(ReportDiscussRequest discussRequest, SseEmitter sseEmitter)
     {
+        // 2026.08.06 修复，对于同一个对话下，讨论的发起必须是串行的，
+        // 这也是所有 AI 产品的设计标准，所以此处需要使用锁控制并发。
+        if (!this.discussSessionLockGurard.tryAcquire(discussRequest.getSessionId()))
+        {
+            throw new
+            DiscussException(
+                format(
+                    "Session %s is currently generating response. " +
+                    "Please wait for completion or cancel ongoing request.",
+                    discussRequest.getSessionId()
+                )
+            );
+        }
+
         final DeepSeekChatProperties chatProperties
             = this.properties.getAnalyzerReportChatProp();
 
