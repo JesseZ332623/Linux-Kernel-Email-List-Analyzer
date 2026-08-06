@@ -98,9 +98,9 @@ public class KernelEmailStateMachineTest
     private List<LinuxKernelEmailEntiy> makeTestEmail()
     {
         return
-        IntStream.range(0, TEST_EMAILS)
-            .mapToObj((ignore) -> {
-                final long nextId              = this.globalIdConsumer.nextId();
+        this.globalIdConsumer.nextIds(TEST_EMAILS)
+            .stream()
+            .map((nextId) -> {
                 final PlainTextEmail testEmail = new PlainTextEmail();
 
                 testEmail.setMessageId("TEST");
@@ -112,7 +112,8 @@ public class KernelEmailStateMachineTest
 
                 return
                 LinuxKernelEmailEntiy.fromPlainTextEmail(nextId, testEmail);
-            }).toList();
+            })
+            .toList();
     }
 
     /** 每一批邮件状态流转的核心逻辑。*/
