@@ -8,7 +8,6 @@ import com.jesse.analyze_report_discuss.components.report_cache.AnalyzerReportDi
 import com.jesse.analyze_report_discuss.components.report_cache.KenelEmailAnalyzeReportCacher;
 import com.jesse.analyze_report_discuss.dto.KenelEmailAnalyzeReport;
 import com.jesse.analyze_report_discuss.exception.DiscussException;
-import com.jesse.analyze_report_discuss.repository.AnalyzeReportDiscussSessionDetailsRepository;
 import com.jesse.analyze_report_discuss.request.DiscussAbstractReqest;
 import com.jesse.core.annotation.TimeMonitor;
 import com.jesse.core.utils.HttpClientUtils;
@@ -34,10 +33,6 @@ import java.util.concurrent.TimeUnit;
 public class AnalyzeReportDiscussDeepSeekAbstractor
     implements AnalyzeReportDiscussAbstractor
 {
-    /** Linux 内核邮件分析报告疑惑解答会话对话内容表仓储类。*/
-    private final
-    AnalyzeReportDiscussSessionDetailsRepository discussSessionDetailsRepository;
-
     /** 第三方应用访问 API Keys 表仓库类。*/
     private final
     ApplicationApiKeysRepository applicationApiKeysRepository;
@@ -74,19 +69,20 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
     private String
     generateAbstractUserPrompt(DiscussAbstractReqest reqest)
     {
+        // (1) 获取 核邮件分析报告答疑解惑上下文摘要模型配置
         final DeepSeekChatProperties properties
             = this.analyzerReportDiscussProperties
                   .getAnalyzerReportChatAbstractProp();
 
-        final String taskId   = reqest.getTaskId();
-        final String sessinId = reqest.getSessionId();
-        final String modelResponseId = reqest.getModelResponseId();
+        final String taskId = reqest.getTaskId();
 
+        // (2) 读取摘要任务用户提示词模板
         final String promptTemplate
             = this.modelPromptReader
                   .read(properties.getUsrPromptsClasspath())
                   .orElseThrow(() -> new DiscussException("Abstract user prompt file not exist."));
 
+        // (3) 从缓存中获取邮件文本和分析报告信息
         final KenelEmailAnalyzeReport analyzeReport
             = this.analyzeReportCacher.getOrLoad(taskId)
                   .orElseThrow(() -> {
@@ -94,11 +90,13 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
                       return new DiscussException("Analyze report not exist.");
                   });
 
+        // (4) 模型的回复文本不需要回表查，上游直接传递即可
         final String modelAnswerContent
-            = this.discussSessionDetailsRepository
-                  .getModelAnswerContentByModelResponseId(sessinId, modelResponseId)
-                  .orElseThrow(() -> new DiscussException("Model answer content not exist."));
+            = reqest.getAgregatedResponse().getChoices().getFirst()
+                    .getMessage()
+                    .getContent();
 
+        // (5) 填充用户提示词模板并返回
         return promptTemplate.formatted(
             analyzeReport.getEmailSubject(),
             analyzeReport.getEmailContent(),
@@ -140,7 +138,6 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
         final String abstractUserPrompt
             = this.generateAbstractUserPrompt(reqest);
 
-
         // (5) 构造 HTTP 请求体和请求头
         final HttpEntity<AIModelChatRequest> httpEntity
             = this.httpClientUtils
@@ -164,7 +161,7 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
             // (7) 解析响应体
             final AIModelAnswerResponse abstractResponse
                 = this.objectMapper
-                .readValue(responseJSON, AIModelAnswerResponse.class);
+                      .readValue(responseJSON, AIModelAnswerResponse.class);
 
             // (8) 将上下文摘要缓存到会话中
             this.reportDiscussAbstractCacher.set(

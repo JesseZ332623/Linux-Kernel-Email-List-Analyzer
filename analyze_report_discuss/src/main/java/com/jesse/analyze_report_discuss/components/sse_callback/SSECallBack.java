@@ -26,6 +26,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -70,6 +72,10 @@ public class SSECallBack implements Callback
     private final
     ResponseChunkHandler responseChunkHandler;
 
+    /** 内核邮件分析报告讨论专用虚拟线程池执行器。*/
+    private final
+    ExecutorService analyzeReportDiscussExecutor;
+
     /** 每次发起 Stream 模式调用的时候，构造本回调的实例。*/
     public static SSECallBack create(
         final Long                 sessionDetailId,
@@ -78,13 +84,15 @@ public class SSECallBack implements Callback
         final ObjectMapper         objectMapper,
         final AnalyzeReportDiscussSessionDetailsService discussSessionDetailsService,
         final AIModelAnswerAuditService aiModelAnswerAuditService,
-        final AnalyzeReportDiscussAbstractor analyzeReportDiscussAbstractor
+        final AnalyzeReportDiscussAbstractor analyzeReportDiscussAbstractor,
+        final ExecutorService executorService
     )
     {
         final ResponseChunkHandler responseChunkHandler
             = ResponseChunkHandler.create(sseEmitter);
 
-        return new SSECallBack(
+        return new
+        SSECallBack(
             sessionDetailId,
             discussRequest,
             sseEmitter,
@@ -92,7 +100,8 @@ public class SSECallBack implements Callback
             aiModelAnswerAuditService,
             discussSessionDetailsService,
             analyzeReportDiscussAbstractor,
-            responseChunkHandler
+            responseChunkHandler,
+            executorService
         );
     }
 
@@ -210,6 +219,120 @@ public class SSECallBack implements Callback
         }
     }
 
+    /** 本次对话完成后需要在后台执行的审计与上下文摘要任务。*/
+    private void
+    auditAndAbstract(AIModelAnswerResponse agregatedResponse)
+    {
+        // (1) 审计大模型调用信息
+        final CompletableFuture<String> saveAudit
+            = CompletableFuture.supplyAsync(
+                () -> {
+                    this.aiModelAnswerAuditService.save(agregatedResponse);
+                    return "OK";
+                },
+                this.analyzeReportDiscussExecutor
+            ).exceptionally((exception) -> {
+                log.error(
+                    "Model response audit failed. (response id = {})",
+                    agregatedResponse.getId(), exception
+                );
+
+                return exception.getMessage();
+        });
+
+        // (2) 将会话下的某个对话记录与大模型回复关联，代表大模型已经回答了这个问题
+        final CompletableFuture<String> associateResponse
+            = CompletableFuture.supplyAsync(
+                () -> {
+                    this.discussSessionDetailsService
+                        .updateModelResponseIdBySessionId(
+                            this.sessionDetailId,
+                            this.discussRequest.getSessionId(),
+                            agregatedResponse.getId()
+                        );
+
+                    return "OK";
+                },
+                this.analyzeReportDiscussExecutor
+            ).exceptionally((exception) -> {
+                log.error(
+                    "Associate aconversation failed " +
+                    "(session id = {}, conversation id = {}, response id = {})",
+                    this.discussRequest.getSessionId(),
+                    this.sessionDetailId,
+                    agregatedResponse.getId(),
+                    exception
+                );
+
+                return exception.getMessage();
+        });
+
+        // (3) 摘要并缓存本次回答信息
+        final CompletableFuture<String> discussAbstract
+            = CompletableFuture.supplyAsync(
+                () -> {
+                    final DiscussAbstractReqest abstractRequest
+                        = new DiscussAbstractReqest(
+                            this.discussRequest.getTaskId(),
+                            this.discussRequest.getSessionId(),
+                            agregatedResponse,
+                            this.discussRequest.getQuestion()
+                        );
+
+                    this.analyzeReportDiscussAbstractor.discussAbstract(abstractRequest);
+
+                    return "OK";
+                },
+                this.analyzeReportDiscussExecutor
+            ).exceptionally((exception) -> {
+                log.error(
+                    "Generate disscuss abstract failed. " +
+                    "(task id = {}, session id = {}, response id = {})",
+                    this.discussRequest.getTaskId(),
+                    this.discussRequest.getSessionId(),
+                    agregatedResponse.getId(),
+                    exception
+                );
+
+                return exception.getMessage();
+        });
+
+        try
+        {
+            final Map<String, CompletableFuture<String>> taskMap
+                = Map.of(
+                    "save audit",         saveAudit,
+                    "associate response", associateResponse,
+                    "discuss abstract",   discussAbstract
+                );
+
+            CompletableFuture.allOf(taskMap.values().toArray(CompletableFuture[]::new))
+                .get(10, TimeUnit.SECONDS);
+
+            final String executeResultInfo
+                = taskMap.entrySet().stream()
+                    .map((entry) ->
+                        "%s: %s".formatted(
+                            entry.getKey(),
+                            entry.getValue().getNow("Unknown error")
+                        )
+                    )
+                    .collect(Collectors.joining(" | "));
+
+            log.debug(
+                "Background task complete. (response id: {}, {})",
+                agregatedResponse.getId(), executeResultInfo
+            );
+        }
+        catch (TimeoutException timeout) {
+            log.error("Background task timeout.", timeout);
+        }
+        catch (InterruptedException interrupted) {
+            log.error("Background task has been interrupted.", interrupted);
+        }
+        catch (ExecutionException ignore) { /* 不会来到此处 */ }
+    }
+
     /** 上游传输时出错则调用本方法，向前端推送错误事件。*/
     @Override
     public void
@@ -235,34 +358,6 @@ public class SSECallBack implements Callback
         log.error(
             "Read SSE response data failed. URL: {}, Method: {}",
             request.url(), request.method(), exception
-        );
-    }
-
-    /** 本次对话完成后需要在后台执行的审计与上下文摘要任务。*/
-    private void
-    auditAndAbstract(AIModelAnswerResponse agregatedResponse)
-    {
-        log.debug("Model response id = {}", agregatedResponse.getId());
-
-        // (1) 审计大模型调用信息
-        this.aiModelAnswerAuditService.save(agregatedResponse);
-
-        // (2) 将会话下的某个对话记录与大模型回复关联，代表大模型已经回答了这个问题
-        this.discussSessionDetailsService
-            .updateModelResponseIdBySessionId(
-                this.sessionDetailId,
-                this.discussRequest.getSessionId(),
-                agregatedResponse.getId()
-            );
-
-        // (3) 摘要并缓存本次回答信息
-        this.analyzeReportDiscussAbstractor.discussAbstract(
-            new DiscussAbstractReqest(
-                this.discussRequest.getTaskId(),
-                this.discussRequest.getSessionId(),
-                agregatedResponse.getId(),
-                this.discussRequest.getQuestion()
-            )
         );
     }
 

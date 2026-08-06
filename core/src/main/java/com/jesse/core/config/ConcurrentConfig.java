@@ -16,6 +16,22 @@ public class ConcurrentConfig
     /** 邮箱服务属性配置类。*/
     private final EmailReceiverProperties emailReceiverProperties;
 
+    /** 内核邮件分析报告讨论专用虚拟线程池执行器。*/
+    @Bean(
+        name          = "analyze-report-discuss-executor",
+        destroyMethod = "shutdown"
+    )
+    public ExecutorService analyzeReportDiscussExecutor()
+    {
+        final ThreadFactory threadFactory
+            = Thread.ofVirtual()
+                .name("analyze-report-discuss-", 0)
+                .factory();
+
+        return
+        Executors.newThreadPerTaskExecutor(threadFactory);
+    }
+
     /** 邮件服务专用虚拟线程执行器。*/
     @Bean(
         name          = "email-service-executor",
