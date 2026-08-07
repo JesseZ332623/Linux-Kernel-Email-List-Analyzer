@@ -80,6 +80,13 @@
             <version>3.5.9</version>
         </dependency>
 
+        <!-- MyBatis-Plus SQL 解析，分页相关依赖 -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>3.5.9</version>
+        </dependency>
+
         <!-- MySQL 数据库驱动，直接实现了 MySQL 客户端-服务器通信协议 -->
         <dependency>
             <groupId>com.mysql</groupId>

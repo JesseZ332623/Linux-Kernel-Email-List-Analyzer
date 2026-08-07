@@ -1,8 +1,13 @@
 package com.jesse.analyze_report_discuss.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jesse.analyze_report_discuss.dto.ConversationsBySessionId;
+import com.jesse.analyze_report_discuss.request.ConversationPagesRequest;
 import com.jesse.analyze_report_discuss.request.DeleteSelectedSessionRequest;
+import com.jesse.analyze_report_discuss.request.PaginateConversationRequest;
 import com.jesse.analyze_report_discuss.response.DeleteDiscussSessionResponse;
 import com.jesse.analyze_report_discuss.response.DiscussSessionResponse;
+import com.jesse.core.response.PageResponse;
 import com.jesse.analyze_report_discuss.service.AnalyzeReportDiscussSessionService;
 import com.jesse.core.response.CustomizedResponse;
 import jakarta.servlet.http.HttpServletResponse;
@@ -56,6 +61,86 @@ public class AnalyzeReportDiscussSessionController
             sessions
         );
     }
+
+    /** 查询一个会话下指定页大小时的页数。*/
+    @GetMapping(path = "/query-conversation-pages")
+    public CustomizedResponse<Long>
+    getConversationPagesBySessionId(
+        @RequestBody
+        final ConversationPagesRequest request,
+        final HttpServletResponse response
+    )
+    {
+        try
+        {
+            final long pages
+                = this.analyzeReportDiscussSessionService
+                      .getConversationPagesBySessionId(request.getSessionId(), request.getPageSize());
+
+            return
+            CustomizedResponse.responseOf(
+                response, HttpStatus.OK,
+                null,
+                pages
+            );
+        }
+        catch (IllegalArgumentException exception)
+        {
+            return
+            CustomizedResponse.responseOf(
+                response, HttpStatus.BAD_REQUEST,
+                exception.getMessage(),
+                null
+            );
+        }
+    }
+
+    /** 分页查询一个会话下所有有效的对话记录。*/
+    @GetMapping(path = "query-conversations")
+    public CustomizedResponse<PageResponse<ConversationsBySessionId>>
+    getConversationsBySessionId(
+        @RequestBody
+        final PaginateConversationRequest request,
+        final HttpServletResponse response
+    )
+    {
+        try
+        {
+            final Page<ConversationsBySessionId> page
+                = this.analyzeReportDiscussSessionService
+                      .getConversationsBySessionId(
+                          request.getSessionId(),
+                          request.getPageNo(),
+                          request.getPageSize()
+                      );
+
+            final PageResponse<ConversationsBySessionId> pageResponse
+                = new PageResponse<>();
+
+            pageResponse.setData(page.getRecords());
+            pageResponse.setPageNo(page.getCurrent());
+            pageResponse.setPageSize(page.getSize());
+            pageResponse.setCount(page.getTotal());
+
+            return
+            CustomizedResponse.responseOf(
+                response, HttpStatus.OK,
+                "Query conversations from session %s"
+                    .formatted(request.getSessionId()),
+                pageResponse
+            );
+        }
+        catch (IllegalArgumentException exception)
+        {
+            return
+            CustomizedResponse.responseOf(
+                response, HttpStatus.BAD_REQUEST,
+                exception.getMessage(),
+                null
+            );
+        }
+    }
+
 
     /** 在指定分析报告下创建一个新的会话。*/
     @PostMapping
