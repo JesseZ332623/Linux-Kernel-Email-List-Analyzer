@@ -1,6 +1,8 @@
 package com.jesse.analyze_report_discuss.repository;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jesse.analyze_report_discuss.dto.ConversationsBySessionId;
 import com.jesse.analyze_report_discuss.dto.SessionCountByTaskId;
 import com.jesse.analyze_report_discuss.response.DiscussSessionResponse;
 import com.jesse.core.entity.AnalyzeReportDiscussSession;
@@ -39,6 +41,42 @@ public interface AnalyzeReportDiscussSessionRepository
             task_id
     """)
     List<SessionCountByTaskId> getSessionCountByTaskId();
+
+    /** 查询一个会话下有效的对话记录条数。*/
+    @Select("""
+        SELECT
+            COUNT(*)
+        FROM
+            ai_analyze_discuss_session_details AS conversation
+        INNER JOIN
+            ai_model_answer_content AS answer_content
+        ON
+            conversation.model_response_id = answer_content.task_id
+        WHERE
+            session_id = #{sessionId}
+    """)
+    Long getConversationCountsBySessionId(String sessionId);
+
+    /** 分页查询一个会话下所有有效的对话记录。*/
+    @Select("""
+        SELECT
+            conversation.question  AS question,
+            answer_content.content AS content
+        FROM
+            ai_analyze_discuss_session_details AS conversation
+        INNER JOIN
+            ai_model_answer_content AS answer_content
+        ON
+            conversation.model_response_id = answer_content.task_id
+        WHERE
+            conversation.session_id = #{sessionId}
+        ORDER BY
+            conversation.create_at ASC
+    """)
+    Page<ConversationsBySessionId> getConversationsBySessionId(
+        @Param("page")      Page<ConversationsBySessionId> page,
+        @Param("sessionId") String sessionId
+    );
 
     /** 删除一篇分析报告下指定的会话记录。*/
     int deleteBySessionId(
