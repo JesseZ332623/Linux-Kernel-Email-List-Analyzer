@@ -1,7 +1,9 @@
 package com.jesse.analyze_report_discuss.service.impl;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jesse.analyze_report_discuss.components.report_cache.KenelEmailAnalyzeReportCacher;
+import com.jesse.analyze_report_discuss.dto.ConversationsBySessionId;
 import com.jesse.analyze_report_discuss.dto.KenelEmailAnalyzeReport;
 import com.jesse.analyze_report_discuss.dto.SessionCountByTaskId;
 import com.jesse.analyze_report_discuss.exception.DiscussSessionException;
@@ -92,6 +94,46 @@ public class AnalyzeReportDiscussSessionServiceImpl
     public List<DiscussSessionResponse>
     getDiscussSessionByTaskId(String taskId) {
         return this.baseMapper.getDiscussSessionByTaskId(taskId);
+    }
+
+    /** 查询一个会话下指定页大小时的页数。*/
+    @Override
+    public long
+    getConversationPagesBySessionId(String sessionId, long pageSize)
+    {
+        if (pageSize <= 0) {
+            throw new IllegalArgumentException("Param pageSize must large then 0");
+        }
+
+        final long totalConversations
+            = this.baseMapper.getConversationCountsBySessionId(sessionId);
+
+        return (totalConversations + pageSize - 1L) / pageSize;
+    }
+
+    /** 分页查询一个会话下所有有效的对话记录。*/
+    @Override
+    public Page<ConversationsBySessionId>
+    getConversationsBySessionId(String sessionId, long pageNum, long pageSize)
+    {
+        if (pageNum <= 0 || pageSize < -1)
+        {
+            throw new
+            IllegalArgumentException(
+                "Invalid page param (pageNum = %s, page size = %s)"
+                    .formatted(pageNum, pageSize)
+            );
+        }
+
+        final long actualPageSize
+            = (pageSize == -1)
+                ? this.baseMapper.getConversationCountsBySessionId(sessionId)
+                : pageSize;
+
+        final Page<ConversationsBySessionId> page
+            = new Page<>(pageNum, actualPageSize);
+
+        return this.baseMapper.getConversationsBySessionId(page, sessionId);
     }
 
     /** 在指定分析报告下创建一个新的会话。*/
