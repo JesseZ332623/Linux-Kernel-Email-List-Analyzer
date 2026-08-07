@@ -1,4 +1,4 @@
-# Linux 内核补丁分析归档服务
+# Linux 内核邮件补丁分析、归档、讨论服务
 
 <div>
     <img
@@ -199,4 +199,4 @@ linux_kernel_email_list_analyzer (父 POM)
 
 [Apache License Version 2.0](https://github.com/JesseZ332623/Linux-Kernal-Email-List-Analyzer/blob/main/LICENSE)
 
-## 2026.08.05
+## 2026.08.07
