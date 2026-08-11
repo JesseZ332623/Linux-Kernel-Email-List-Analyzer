@@ -12,7 +12,6 @@ import com.jesse.core.pojo.ai.AIModelAnswerMessage;
 import com.jesse.core.pojo.ai.AIModelAnswerUsage;
 import com.jesse.core.pojo.ai.sse.AIModelAnswerMessageBySSE;
 import com.jesse.core.response.AIModelAnswerResponse;
-import com.jesse.core.response.base.AIModelAnswerBaseResponse;
 import com.jesse.core.response.sse.AIModelAnswerSSEResponse;
 import com.jesse.response_audit.service.AIModelAnswerAuditService;
 import lombok.AccessLevel;
@@ -197,7 +196,7 @@ public class SSECallBack implements Callback
     }
 
     /** 解析数据片 JSON 为指定的 POJO。*/
-    private AIModelAnswerBaseResponse
+    private AIModelAnswerSSEResponse
     parseResponseLine(String eventData)
     {
         if (RESPONSE_DONE.equals(eventData.trim())) {
@@ -210,19 +209,10 @@ public class SSECallBack implements Callback
             this.objectMapper
                 .readValue(eventData, AIModelAnswerSSEResponse.class);
         }
-        catch (JsonProcessingException exception)
+        catch (JsonProcessingException exception2)
         {
-            try
-            {
-                return
-                this.objectMapper
-                    .readValue(eventData, AIModelAnswerResponse.class);
-            }
-            catch (JsonProcessingException exception2)
-            {
-                log.error("Parse response line {} failed.", eventData, exception2);
-                return null;
-            }
+            log.error("Parse response line {} failed.", eventData, exception2);
+            return null;
         }
     }
 
@@ -275,34 +265,37 @@ public class SSECallBack implements Callback
         });
 
         // (3) 摘要并缓存本次回答信息
+        //（如果 SSE 事件发射器被客户端中断了，则跳过本任务）
         final CompletableFuture<String> discussAbstract
-            = CompletableFuture.supplyAsync(
-                () -> {
-                    final DiscussAbstractReqest abstractRequest
-                        = new DiscussAbstractReqest(
-                            this.discussRequest.getTaskId(),
-                            this.discussRequest.getSessionId(),
-                            agregatedResponse,
-                            this.discussRequest.getQuestion()
-                        );
+            = (!this.responseChunkHandler.isEmitterInterrupted())
+                ? CompletableFuture.supplyAsync(
+                    () -> {
+                        final DiscussAbstractReqest abstractRequest
+                            = new DiscussAbstractReqest(
+                                this.discussRequest.getTaskId(),
+                                this.discussRequest.getSessionId(),
+                                agregatedResponse,
+                                this.discussRequest.getQuestion()
+                            );
 
-                    this.analyzeReportDiscussAbstractor.discussAbstract(abstractRequest);
+                        this.analyzeReportDiscussAbstractor.discussAbstract(abstractRequest);
 
-                    return "OK";
-                },
-                this.analyzeReportDiscussExecutor
-            ).exceptionally((exception) -> {
-                log.error(
-                    "Generate disscuss abstract failed. " +
-                    "(task id = {}, session id = {}, response id = {})",
-                    this.discussRequest.getTaskId(),
-                    this.discussRequest.getSessionId(),
-                    agregatedResponse.getId(),
-                    exception
-                );
+                        return "OK";
+                    }, this.analyzeReportDiscussExecutor
+                ).exceptionally((exception) -> {
+                    log.error(
+                        "Generate disscuss abstract failed. " +
+                        "(task id = {}, session id = {}, response id = {})",
+                        this.discussRequest.getTaskId(),
+                        this.discussRequest.getSessionId(),
+                        agregatedResponse.getId(),
+                        exception
+                    );
 
-                return exception.getMessage();
-        });
+                    return exception.getMessage();
+                })
+                : CompletableFuture.supplyAsync(() -> "SKIP");
+
 
         try
         {
@@ -403,6 +396,31 @@ public class SSECallBack implements Callback
 
             final List<AIModelAnswerSSEResponse> chunks = new ArrayList<>();
 
+            /*
+             * 2026 年 8 月 10 日问题与修复：
+             * 在调用 bufferedReader.lines() 接受大模型 API 传来的数据片时，
+             * 如果前端关闭、刷新页面或者点击停止按钮，客户端的连接已经中断，
+             * 但大模型服务这边却还 “孜孜不倦” 的往已经关闭的 SseEmitter 推送数据片，
+             * 最终导致了这样的异常链条：
+             *
+             * org.springframework.web.context.request.async.AsyncRequestNotUsableException
+             *      "ServletOutputStream failed to flush: java.io.IOException: Connection reset by peer"
+             * 抛点来自 SseEmitter 的 send() 方法
+             *
+             * java.io.IOException
+             *      "Connection reset by peer"
+             *
+             * 解决方案：
+             *
+             * 在 ResponseChunkHandler 类内添加一个 isEmitterInterrupted 标志位，
+             * 如果推送数据片失败，则翻转该标志位为 true，
+             * 后续大模型 API 传来的数据片则绕过 handleResponseChunk() 方法，
+             * 直接传递数据片给下游即可。
+             *
+             * 此外，还需要在全局异常处理器中
+             * “抑制” AsyncRequestNotUsableException 异常，令其只输出异常信息，
+             * 不打印异常堆栈。
+             */
             try (var bufferedReader = makeBufferedReader(body))
             {
                 bufferedReader
@@ -411,12 +429,19 @@ public class SSECallBack implements Callback
                     .map(SSECallBack::extractChunkJsonText)
                     .map(this::parseResponseLine)
                     .filter(Objects::nonNull)
-                    .map(this.responseChunkHandler::handleResponseChunk)
-                    .filter(Objects::nonNull)
+                    .map((chunk) ->
+                        // 如果客户端的连接已经断了，则跳过推送
+                        // 但是数据片还是应该收集给下游审计
+                        (this.responseChunkHandler.isEmitterInterrupted())
+                            ? chunk
+                            : this.responseChunkHandler.handleResponseChunk(chunk)
+                    )
                     .forEach(chunks::add);
-            }
 
-            this.sseEmitter.complete();
+                if (!this.responseChunkHandler.isEmitterInterrupted()) {
+                    this.sseEmitter.complete();
+                }
+            }
 
             // 收集完所有的响应数据片后，再统一作审计信息持久化。
             this.agregateResponseChunks(chunks)
