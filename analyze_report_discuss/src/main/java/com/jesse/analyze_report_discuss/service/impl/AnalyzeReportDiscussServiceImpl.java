@@ -146,7 +146,6 @@ public class AnalyzeReportDiscussServiceImpl
                       return new DiscussException("Analyze report not exist.");
                   });
 
-
         // (3) 读取讨论任务系统提示词
         final String chatSysPrompt
             = this.modelPromptReader.read(chatProperties.getSysPromptsClasspath())
@@ -165,16 +164,17 @@ public class AnalyzeReportDiscussServiceImpl
                       question
                   );
 
+        // (5) 获取讨论任务大模型的 API Key
         final String apiKey
             = this.apiKeysRepository
                   .findByAppName(chatProperties.getAuthorizationName());
 
-        // (5) 构造请求体
+        // (6) 构造请求体
         final Request request
             = this.httpClientUtils
                   .makeOkRequest(apiKey, chatSysPrompt, chatUsrPrompt, chatProperties);
 
-        // (6) 发起请求，异步的往前端推送数据流
+        // (7) 发起请求，异步的往前端推送数据流
         this.okHttpClient.newCall(request)
             .enqueue(this.newSSECallback(sessionDetailId, discussRequest, sseEmitter));
     }
