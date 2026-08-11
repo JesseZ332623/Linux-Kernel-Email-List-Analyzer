@@ -199,4 +199,4 @@ linux_kernel_email_list_analyzer (父 POM)
 
 [Apache License Version 2.0](https://github.com/JesseZ332623/Linux-Kernal-Email-List-Analyzer/blob/main/LICENSE)
 
-## 2026.08.07
+## 2026.08.11
