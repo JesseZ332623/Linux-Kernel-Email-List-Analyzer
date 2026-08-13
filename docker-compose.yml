@@ -1,0 +1,184 @@
+services:
+
+  # MySQL 容器属性配置
+  mysql:
+    image: mysql:8.0       # 镜像名和版本（会自动拉取 8.0 下最新的小版本）
+    container_name: lkml-analyzer-mysql  # 容器名
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD} # root 用户密码
+      MYSQL_DATABASE: ${MYSQL_DATABASE}    # 容器启动时创建的数据库
+      MYSQL_USER: ${MYSQL_USER}            # 额外创建一个普通用户
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}    # 普通用户的密码
+      TZ: Asia/Shanghai                    # 时区
+      # API Keys 传给初始化脚本
+      API_KEY_EMAIL: ${API_KEY_EMAIL}
+      API_KEY_EMAIL_VALUE: ${API_KEY_EMAIL_VALUE}
+      API_KEY_DEEPSEEK_ANALYZER: ${API_KEY_DEEPSEEK_ANALYZER}
+      API_KEY_DEEPSEEK_ANALYZER_VALUE: ${API_KEY_DEEPSEEK_ANALYZER_VALUE}
+      API_KEY_DEEPSEEK_CHAT: ${API_KEY_DEEPSEEK_CHAT}
+      API_KEY_DEEPSEEK_CHAT_VALUE: ${API_KEY_DEEPSEEK_CHAT_VALUE}
+      API_KEY_DEEPSEEK_ABSTRACT: ${API_KEY_DEEPSEEK_ABSTRACT}
+      API_KEY_DEEPSEEK_ABSTRACT_VALUE: ${API_KEY_DEEPSEEK_ABSTRACT_VALUE}
+    ports:
+      # 数据库在容器内监听默认的 3306 端口
+      # 但是宿主机可以通过 13306 端口访问容器内的中间件
+      - "13306:3306"
+
+    # 数据持久化属性
+    volumes:
+      # 数据文件在容器内的路径
+      - mysql-data:/var/lib/mysql
+
+      # 容器启动时将冒号左边的文件
+      # 映射到容器内名为 /docker-entrypoint-initdb.d 的特殊文件中，
+      # 然后按顺序执行该目录下的所有 .sql .sh .sql.gz 文件（仅启动时执行一次）
+      - ./docker-scripts/mysql/table-init.sql:/docker-entrypoint-initdb.d/01-table-init.sql
+      - ./docker-scripts/mysql/init-api-keys.sh:/docker-entrypoint-initdb.d/02-init-api-keys.sh
+
+    # 启动命令选型配置
+    command:
+      # 默认字符集设成 utf8mb4（支持 emoji）
+      - --character-set-server=utf8mb4
+
+      # 字符比较与排序规则
+      # 字符集使用 utf8mb4
+      # 标准为 Unicode 9.0
+      # 重音不敏感   accent insensitive
+      # 大小写不敏感 case insensitive
+      - --collation-server=utf8mb4_0900_ai_ci
+
+      # 时区设成东八区（北京时间）
+      - --default-time-zone=+08:00
+
+    # 健康检查属性配置
+    healthcheck:
+      # CMD 是 docker healthckeck 的两个执行模型关键字
+      # 直接调用后面列出的可执行文件 + 选项参数
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pjesse_root"]
+      interval: 10s # 执行间隔（从上一次执行完毕后算起）
+      timeout: 3s   # 单次 ping 如果超过 3 秒，算一次失败
+      retries: 3    # 连续失败 3 次就标记为不健康
+      start_period: 60s # 启动宽限期，这段时间失败不计入 retries
+
+    # 将 MySQL 容器加入 app-network 这个自定义网格
+    networks:
+      - app-network
+
+  # Redis 容器属性配置
+  redis:
+    image: redis:8-alpine
+    container_name: lkml-analyzer-redis
+    restart: always
+    ports:
+      - "6380:6379"
+
+    volumes:
+      # Redis 数据持久化到具名卷
+      - redis-data:/data
+
+    # 开启 AOF 持久化，默认 RDB 也开启
+    command: redis-server --appendonly yes
+
+    # 健康检查属性配置
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+    # 将 Redis 容器加入 app-network 这个自定义网格
+    networks:
+      - app-network
+
+  # Rabbit 容器属性配置
+  rabbitmq:
+    image: rabbitmq:latest
+    container_name: lkml-analyzer-rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: admin            # 默认用户名
+      RABBITMQ_DEFAULT_PASS: jesse_rabbbit_mq # 默认密码
+    ports:
+      - "5673:5672"    # AMQP 协议端口
+      - "15673:15672"  # Web 管理界面端口
+    volumes:
+      # RabbitMQ 数据持久化（队列消息、用户配置等）
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "check_port_connectivity" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+    # 将 RabbitMQ 容器加入 app-network 这个自定义网格
+    networks:
+      - app-network
+
+  id-allocator-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.id-allocator
+    container_name: id-allocator
+    restart: on-failure
+    ports:
+      - "34334:34334"
+    environment:
+      APP_REDIS_HOST: redis
+      APP_REDIS_PORT: 6379
+      APP_ID_REPLENISHER_TARGET_BUFFER: 3000
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  linux-kernel-email-analyzer-service:
+    build:
+      context: . # Dockerfile.analyzer 所在目录
+      dockerfile: Dockerfile.analyzer
+    container_name: linux-kernel-email-analyzer
+    restart: on-failure
+    ports:
+      - "26543:26543"
+    environment:
+      # 用容器名连接中间件
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/lkml_analyze?useSSL=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: Jesse_EC233
+      SPRING_DATASOURCE_PASSWORD: 3191955858_EC
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${SPRING_RABBITMQ_USERNAME}
+      SPRING_RABBITMQ_PASSWORD: ${SPRING_RABBITMQ_PASSWORD}
+
+      # docker 内部使用服务名进行内部通信
+      APP_ID_CONSUMER_DIRECTORY_URLS_NEXT: http://id-allocator-service:34334/api/id_allocator/next
+      APP_ID_CONSUMER_DIRECTORY_URLS_NEXT_BATCH: http://id-allocator-service:34334/api/id_allocator/next-batch
+
+      # 将代理地址变更为 Docker 默认的网桥
+      # 这样邮箱服务连接就能直接走宿主机的代理
+      APP_EMAIL_PROXY_HOST: "host.docker.internal"
+      APP_EMAIL_PROXY_PORT: 10808
+
+      # 每次往消息队列推送的内核补丁邮件数量
+      APP_LKML_PUSH_LIMIT: 5
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - app-network
+
+volumes:
+  mysql-data:
+  redis-data:
+  rabbitmq-data:
+
+networks:
+  app-network:
+    driver: bridge
