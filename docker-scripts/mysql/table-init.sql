@@ -1,4 +1,15 @@
+-- 设置客户端、连接、结果的字符集
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+SET character_set_client = utf8mb4;
+SET character_set_connection = utf8mb4;
+SET character_set_results = utf8mb4;
+SET character_set_server = utf8mb4;
+SET collation_connection = utf8mb4_0900_ai_ci;
+SET collation_server = utf8mb4_0900_ai_ci;
+
 -- AI 分析资源消耗审计需求表结构设计
+-- 在 MySQL Docker 容器启动的时候执行一次
 
 CREATE TABLE `application_api_keys` (
   `id` 				 BIGINT       NOT NULL AUTO_INCREMENT,
@@ -12,13 +23,13 @@ COLLATE=utf8mb4_0900_ai_ci
 COMMENT='第三方应用访问 API Keys 表';
 
 CREATE TABLE `ai_model_answer_audit` (
-  `id` 				   BIGINT      NOT NULL,
-  `task_id` 		   CHAR(36)    NOT NULL COMMENT '本次大模型请求的唯一标识符，用于追踪和问题排查',
-  `object`  		   VARCHAR(45) NOT NULL COMMENT '对象类型，表示这是一个完整的对话生成结果',
-  `created` 		   BIGINT      NOT NULL COMMENT 'Unix 时间戳，表示响应的生成时间',
-  `model` 			   VARCHAR(45) NOT NULL COMMENT '实际处理请求的模型名称',
-  `system_fingerprint` CHAR(45)    NOT NULL COMMENT '后端环境标识，表示处理该请求的具体系统版本 / 配置，调试用',
-  `create_at` 		   DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '审计记录创建时间',
+  `id` 				   BIGINT       NOT NULL,
+  `task_id` 		   CHAR(36)     NOT NULL COMMENT '本次大模型请求的唯一标识符，用于追踪和问题排查',
+  `object`  		   VARCHAR(45)  NOT NULL COMMENT '对象类型，表示这是一个完整的对话生成结果',
+  `created` 		   BIGINT       NOT NULL COMMENT 'Unix 时间戳，表示响应的生成时间',
+  `model` 			   VARCHAR(45)  NOT NULL COMMENT '实际处理请求的模型名称',
+  `system_fingerprint` VARCHAR(255) NOT NULL COMMENT '后端环境标识，表示处理该请求的具体系统版本 / 配置，调试用',
+  `create_at` 		   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '审计记录创建时间',
   PRIMARY KEY (`id`),
   KEY `idx_task_id` (`task_id`) USING BTREE
 )
@@ -65,7 +76,7 @@ COMMENT='AI 模型 LKML 分析任务 Token 消耗明细表';
 CREATE TABLE `ai_model_daily_billing` (
   `id` 				BIGINT      NOT NULL,
   `billing_date` 	DATE        NOT NULL COMMENT '汇总日期',
-  `model_name`      VARCHAR(45) NOT NULL COMMENT '模型名称',
+  `model_name`      VARCHAR(45) DEFAULT NULL COMMENT '模型名称',
   `total_prompt_cache_hit_tokens`  BIGINT NOT NULL DEFAULT 0 COMMENT '当日累计命中缓存的输入 Token 数',
   `total_prompt_cache_miss_tokens` BIGINT NOT NULL DEFAULT 0 COMMENT '当日累计未命中缓存的输入 Token 数',
   `total_completion_tokens`        BIGINT NOT NULL DEFAULT 0 COMMENT '当日累计输出 Token 数',
