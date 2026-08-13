@@ -55,7 +55,7 @@ public class AnalyzeReportDiscussSessionServiceImpl
     @PostConstruct
     protected void initSessionIndexMap()
     {
-        List<SessionCountByTaskId> sessionCountByTaskIdList
+        final List<SessionCountByTaskId> sessionCountByTaskIdList
             = this.baseMapper.getSessionCountByTaskId();
 
         if (!CollectionUtils.isEmpty(sessionCountByTaskIdList))
