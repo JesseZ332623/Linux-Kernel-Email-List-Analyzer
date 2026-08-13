@@ -8,7 +8,7 @@
         style="margin-right: 4px"
     >
     <a href="https://skillicons.dev">
-        <img src="https://skillicons.dev/icons?i=java,spring,linux,gmail,mysql,redis,rabbitmq," alt="技术选型">
+        <img src="https://skillicons.dev/icons?i=java,spring,linux,gmail,mysql,redis,rabbitmq,docker" alt="技术选型">
     </a>
 </div>
 
@@ -199,4 +199,4 @@ linux_kernel_email_list_analyzer (父 POM)
 
 [Apache License Version 2.0](https://github.com/JesseZ332623/Linux-Kernal-Email-List-Analyzer/blob/main/LICENSE)
 
-## 2026.08.07
+## 2026.08.13
