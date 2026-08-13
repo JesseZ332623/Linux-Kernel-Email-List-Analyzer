@@ -1,0 +1,16 @@
+# 全局雪花 ID 分配器镜像构建文件
+
+# 使用 openjdk 维护的 JKD 25 作为基础镜像
+FROM docker.m.daocloud.io/library/eclipse-temurin:25-jdk-noble
+
+# 设置时区
+ENV TZ=Asia/Shanghai
+
+WORKDIR /id-allocator-service
+
+# 复制打包好的 jar 包到容器
+COPY ./other-service-jar/id-allocator-1.0.0.jar id-allocator-1.0.0.jar
+
+EXPOSE 65533
+
+ENTRYPOINT ["java", "-jar", "id-allocator-1.0.0.jar"]
