@@ -136,6 +136,12 @@
             <artifactId>okhttp-jvm</artifactId>
             <version>5.4.0</version>
         </dependency>
+
+        <!-- AWS S3 Java SDK，负责对接对象存储服务（本项目使用的是 MinIO） -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+        </dependency>
     </dependencies>
 
 </project>
