@@ -31,7 +31,7 @@ public class AnalyzeReportDiscussController
     newSseEmitter(ReportDiscussRequest request, long startTimestamp)
     {
         // 设置超时（0 = 永不超时，根据业务调整）
-        SseEmitter emitter = new SseEmitter(0L);
+        final SseEmitter emitter = new SseEmitter(0L);
 
         emitter.onCompletion(
             () -> log.debug(
@@ -44,10 +44,11 @@ public class AnalyzeReportDiscussController
         // emitter.onTimeout();
 
         emitter.onError((exception) ->
-            log.error("SEE error. (request: {}, duration: {} ms)",
+            log.error(
+                "SEE error. (request: {}, duration: {} ms), Caused by: {}",
                 request.toString(),
                 System.currentTimeMillis() - startTimestamp,
-                exception
+                exception.getMessage()
             )
         );
 
