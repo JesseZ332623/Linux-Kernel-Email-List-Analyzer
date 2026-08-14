@@ -31,3 +31,12 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# 敏感文件
+.env
+.env.local
+.env.*.local
+*.env
+
+# 但保留模板环境变量文件的跟踪
+!.env.example

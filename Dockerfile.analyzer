@@ -1,0 +1,19 @@
+# Linux 内核邮件补丁分析、归档、讨论服务镜像构建文件
+
+# 使用 eclipse 维护的 JKD 25 作为基础镜像
+FROM docker.m.daocloud.io/library/eclipse-temurin:25-jdk-noble
+
+# 设置时区
+ENV TZ=Asia/Shanghai
+
+# 创建工作目录
+WORKDIR /lkml-analyzer-service
+
+# 复制打包好的 jar 包到容器
+COPY ./bootstrap/target/linux-kernel-email-analyzer-1.0.0.jar linux-kernel-email-analyzer-1.0.0.jar
+
+# 暴露端口
+EXPOSE 26543
+
+# 启动命令
+ENTRYPOINT ["java", "-jar", "linux-kernel-email-analyzer=1.0.0.jar"]

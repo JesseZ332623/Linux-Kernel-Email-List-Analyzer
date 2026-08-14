@@ -8,7 +8,7 @@
         style="margin-right: 4px"
     >
     <a href="https://skillicons.dev">
-        <img src="https://skillicons.dev/icons?i=java,spring,linux,gmail,mysql,redis,rabbitmq," alt="技术选型">
+        <img src="https://skillicons.dev/icons?i=java,spring,linux,gmail,mysql,redis,rabbitmq,docker" alt="技术选型">
     </a>
 </div>
 
