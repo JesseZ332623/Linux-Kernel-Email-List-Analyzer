@@ -1,0 +1,11 @@
+# MinIO OSS 服务属性配置
+app:
+  minio:
+    # 访问端点
+    endpoint: http://localhost:9000
+
+    # 访问密钥（对应用户名）
+    access-key: ${MINIO_ROOT_USER:minioadmin}
+
+    # 秘密密钥（对应密码）
+    secret-key: ${MINIO_ROOT_PASSWORD:minioadmin}
