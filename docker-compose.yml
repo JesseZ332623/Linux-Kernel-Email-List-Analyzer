@@ -115,30 +115,63 @@ services:
     networks:
       - app-network
 
+  # MinIO 对象存储服务容器属性
+  minio:
+    image: minio/minio:latest
+    container_name: lkml-analyzer-minio
+    ports:
+      - "9000:9000" # API 端口
+      - "9001:9001" # Console 前端页面端口
+    # 仅手动停止不会重启
+    restart: unless-stopped
+    # 环境变量配置
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    # 具名卷配置
+    volumes:
+      - minio-data:/data
+    # 启动选项配置
+    command: server /data --console-address ":9001"
+    # 健康检查配置
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    # 健康检查失败时重启
+    labels:
+      autoheal: "true"
+    networks:
+      - app-network
+
+  # 全局雪花 ID 分配服务容器属性
   id-allocator-service:
     build:
       context: .
       dockerfile: Dockerfile.id-allocator
     container_name: id-allocator
-    restart: on-failure
+    restart: unless-stopped
     ports:
       - "34334:34334"
     environment:
       APP_REDIS_HOST: redis
       APP_REDIS_PORT: 6379
+      # 雪花 ID 补货上限为 3000
       APP_ID_REPLENISHER_TARGET_BUFFER: 3000
     depends_on:
       redis:
         condition: service_healthy
     networks:
       - app-network
-
+  
+  # LKML 分析、归档、讨论服务容器属性配置
   linux-kernel-email-analyzer-service:
     build:
       context: . # Dockerfile.analyzer 所在目录
       dockerfile: Dockerfile.analyzer
     container_name: linux-kernel-email-analyzer
-    restart: on-failure
+    restart: unless-stopped
     ports:
       - "26543:26543"
     environment:
@@ -164,6 +197,9 @@ services:
 
       # 每次往消息队列推送的内核补丁邮件数量
       APP_LKML_PUSH_LIMIT: 5
+
+      # MinIO OSS 服务访问端点
+      APP_MINIO_ENDPOINT: http://minio:9000
     depends_on:
       mysql:
         condition: service_healthy
@@ -178,6 +214,8 @@ volumes:
   mysql-data:
   redis-data:
   rabbitmq-data:
+  minio-data:
+    driver: local
 
 networks:
   app-network:
