@@ -179,9 +179,9 @@ linux_kernel_email_list_analyzer (父 POM)
 
 - [内核邮件分析状态机实现](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/develop/analyzer/src/main/java/com/jesse/analyzer/components/state_machine/impl/KernelEmailStateMachineImpl.java) 
 
-### model_response_audit 模块
+### analyze_report_discuss 模块
 
-- [AI 模型 SSE 协议响应流处理回调实现](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/develop/core/src/main/java/com/jesse/core/enums/KernelEmailStatus.java)
+- [AI 模型 SSE 协议响应流处理回调实现](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/develop/analyze_report_discuss/src/main/java/com/jesse/analyze_report_discuss/components/sse_callback/SSECallBack.java)
 
 - [SSE 响应数据片处理器](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/develop/analyze_report_discuss/src/main/java/com/jesse/analyze_report_discuss/components/sse_callback/ResponseChunkHandler.java)
 
@@ -199,4 +199,4 @@ linux_kernel_email_list_analyzer (父 POM)
 
 [Apache License Version 2.0](https://github.com/JesseZ332623/Linux-Kernal-Email-List-Analyzer/blob/main/LICENSE)
 
-## 2026.08.14
+## 2026.08.15
