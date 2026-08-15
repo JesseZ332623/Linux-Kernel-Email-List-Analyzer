@@ -8,8 +8,7 @@ SET character_set_server = utf8mb4;
 SET collation_connection = utf8mb4_0900_ai_ci;
 SET collation_server = utf8mb4_0900_ai_ci;
 
--- AI 分析资源消耗审计需求表结构设计
--- 在 MySQL Docker 容器启动的时候执行一次
+-- 项目表结构设计，在 MySQL Docker 容器启动的时候执行一次
 
 CREATE TABLE `application_api_keys` (
   `id` 				 BIGINT       NOT NULL AUTO_INCREMENT,
@@ -95,7 +94,7 @@ CREATE TABLE `linux_kernal_email` (
   `task_id`         CHAR(36)     NOT NULL COMMENT '本次大模型请求的唯一标识符，用于追踪和问题排查',
   `status`  	    TINYINT      NOT NULL DEFAULT '0' COMMENT '本邮件在服务中流转的状态',
   `message_id`      VARCHAR(128) NOT NULL COMMENT 'RFC 822 消息 ID',
-  `from`            VARCHAR(64)  NOT NULL COMMENT '邮件发送人',
+  `from`            VARCHAR(128) NOT NULL COMMENT '邮件发送人',
   `subject`         VARCHAR(256) NOT NULL COMMENT '邮件标题 ',
   `utc_time`        VARCHAR(64)  NOT NULL COMMENT '邮件发送时间（UTC 时区）',
   `kernel_time`     VARCHAR(64)  NOT NULL COMMENT '邮件发送时间（LKML 常用时区）',

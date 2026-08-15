@@ -80,7 +80,7 @@ public class KernelEmailAnalyzerServiceImpl implements KernelEmailAnalyzerServic
                         new AnalyzeResultTemplateData(kernelEmailId, kernelEmail, response)
                     );
 
-                // (5) 写到本地文件中去
+                // (5) 持久化
                 this.reportWriter.write(kernelEmailId, kernelEmail, htmlText);
             }
 

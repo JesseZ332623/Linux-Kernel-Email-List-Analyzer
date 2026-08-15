@@ -16,4 +16,4 @@ COPY ./bootstrap/target/linux-kernel-email-analyzer-1.0.0.jar linux-kernel-email
 EXPOSE 26543
 
 # 启动命令
-ENTRYPOINT ["java", "-jar", "linux-kernel-email-analyzer=1.0.0.jar"]
+ENTRYPOINT ["java", "-jar", "linux-kernel-email-analyzer-1.0.0.jar"]

@@ -130,6 +130,15 @@
 				<artifactId>okhttp-jvm</artifactId>
 				<version>5.4.0</version>
 			</dependency>
+
+			<!-- AWS Java JDK -->
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
+				<version>2.53.0</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -148,7 +157,6 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-
 	</dependencies>
 
 	<build>
