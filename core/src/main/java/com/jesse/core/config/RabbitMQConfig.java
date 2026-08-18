@@ -34,7 +34,7 @@ public class RabbitMQConfig
             = new DefaultJackson2JavaTypeMapper();
 
         typeMapper.addTrustedPackages(
-            "com.jesse.linux_kernal_email_list_analyzer.pojo"
+            "com.jesse.core.pojo"
         );
 
         converter.setJavaTypeMapper(typeMapper);
