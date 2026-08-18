@@ -11,9 +11,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @ComponentScan(basePackages = { "com.jesse" })
 @SpringBootApplication
-public class LinuxKernalEmailListAnalyzerApplication
+public class LinuxKernelEmailListAnalyzerApplication
 {
 	public static void main(String[] args) {
-		SpringApplication.run(LinuxKernalEmailListAnalyzerApplication.class, args);
+		SpringApplication.run(LinuxKernelEmailListAnalyzerApplication.class, args);
 	}
 }
