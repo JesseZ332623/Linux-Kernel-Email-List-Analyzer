@@ -19,7 +19,7 @@ public interface KernelEmailAnalyzeReportRepository
             lkml.text_content AS email_content,
             report.content	  AS report_content
         FROM
-        	linux_kernal_email AS lkml
+        	linux_kernel_email AS lkml
         INNER JOIN
         	ai_model_answer_content AS report
         ON
@@ -31,6 +31,6 @@ public interface KernelEmailAnalyzeReportRepository
     getReport(@Param("taskId") String taskId);
 
     /** 查询所有完成了分析的内核邮件的 task_id */
-    @Select("SELECT task_id FROM linux_kernal_email WHERE task_id != ''")
+    @Select("SELECT task_id FROM linux_kernel_email WHERE task_id != ''")
     List<String> getAllExistTaskIds();
 }
