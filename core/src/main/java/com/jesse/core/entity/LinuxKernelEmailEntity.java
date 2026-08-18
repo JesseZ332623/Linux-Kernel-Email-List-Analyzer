@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @ToString
 @EqualsAndHashCode
 @NoArgsConstructor
-@TableName("linux_kernal_email")
+@TableName("linux_kernel_email")
 public class LinuxKernelEmailEntity
 {
     @TableId(type = IdType.INPUT)
