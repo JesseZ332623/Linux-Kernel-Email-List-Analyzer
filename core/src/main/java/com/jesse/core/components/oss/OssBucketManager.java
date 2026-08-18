@@ -75,7 +75,7 @@ public class OssBucketManager
     }
 
     /** 创建一个新桶。*/
-    public void createBucker(String bucketName)
+    public void createBucket(String bucketName)
     {
         try
         {
@@ -147,7 +147,7 @@ public class OssBucketManager
         catch (NoSuchBucketException exception)
         {
             log.error(
-                "Delete bucket {} faield. Caused by [{}] {}",
+                "Delete bucket {} failed. Caused by [{}] {}",
                 bucketName,
                 exception.awsErrorDetails().errorCode(),
                 exception.awsErrorDetails().errorMessage()

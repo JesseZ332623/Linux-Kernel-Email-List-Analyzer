@@ -4,8 +4,8 @@ import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
 import com.jesse.core.enums.KernelEmailStatus;
 import com.jesse.analyzer.components.state_machine.impl.KernelEmailStateMachineImpl;
-import com.jesse.core.entity.LinuxKernelEmailEntiy;
-import com.jesse.analyzer.service.LinuxKernerlEmailService;
+import com.jesse.core.entity.LinuxKernelEmailEntity;
+import com.jesse.analyzer.service.LinuxKernelEmailService;
 import com.jesse.core.components.global_id.GlobalIdConsumer;
 import com.jesse.core.pojo.PlainTextEmail;
 import com.jesse.core.utils.ZoneUtils;
@@ -40,9 +40,9 @@ public class KernelEmailStateMachineTest
     @Autowired
     private GlobalIdConsumer globalIdConsumer;
 
-    /** 内核邮件数据表服务服务类。*/
+    /** 内核邮件数据表服务类。*/
     @Autowired
-    private LinuxKernerlEmailService linuxKernerlEmailService;
+    private LinuxKernelEmailService linuxKernelEmailService;
 
     /** 邮件服务专用虚拟线程执行器。*/
     @Autowired
@@ -95,7 +95,7 @@ public class KernelEmailStateMachineTest
     }
 
     /** 构造测试邮件实体列表。*/
-    private List<LinuxKernelEmailEntiy> makeTestEmail()
+    private List<LinuxKernelEmailEntity> makeTestEmail()
     {
         return
         this.globalIdConsumer.nextIds(TEST_EMAILS)
@@ -111,7 +111,7 @@ public class KernelEmailStateMachineTest
                 testEmail.setTextContent("TEST CONTENT");
 
                 return
-                LinuxKernelEmailEntiy.fromPlainTextEmail(nextId, testEmail);
+                LinuxKernelEmailEntity.fromPlainTextEmail(nextId, testEmail);
             })
             .toList();
     }
@@ -133,7 +133,7 @@ public class KernelEmailStateMachineTest
                 }
 
                 // (2) 删除这一批邮件数据
-                this.linuxKernerlEmailService
+                this.linuxKernelEmailService
                     .getBaseMapper().deleteByIds(partitionIds);
             }, this.emailServiceExecutor
         ).exceptionally((exception) -> {
@@ -146,20 +146,20 @@ public class KernelEmailStateMachineTest
     public void stateTransitionTest()
     {
         // (1) 构造测试邮件实体列表
-        final List<LinuxKernelEmailEntiy> testEmails
+        final List<LinuxKernelEmailEntity> testEmails
             = this.makeTestEmail();
 
         // (2) 获取所有测试邮件的 ID 并分片
         final List<List<Long>> testEmailIds
             = partition(
                 testEmails.stream()
-                    .map(LinuxKernelEmailEntiy::getId)
+                    .map(LinuxKernelEmailEntity::getId)
                     .toList(),
                 500
             );
 
         // (3) 批量插入测试用邮件数据
-        this.linuxKernerlEmailService.saveBatch(testEmails, 500);
+        this.linuxKernelEmailService.saveBatch(testEmails, 500);
 
         // (4) 构造所有状态流转任务并提交给线程池
         final List<CompletableFuture<Void>> stateTransitionTasks

@@ -9,7 +9,7 @@ import com.jesse.core.pojo.ai.AIModelChatMessage;
 import com.jesse.core.pojo.ai.AIModelChatThinking;
 import com.jesse.core.request.AIModelChatRequest;
 import com.jesse.core.response.AIModelAnswerResponse;
-import com.jesse.analyzer.service.LinuxKernerlEmailService;
+import com.jesse.analyzer.service.LinuxKernelEmailService;
 import com.jesse.core.annotation.TimeMonitor;
 import com.jesse.core.pojo.PlainTextEmail;
 import com.jesse.core.properties.DeepSeekChatProperties;
@@ -51,7 +51,7 @@ public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
 
     /** 内核邮件数据表服务实现类。*/
     private final
-    LinuxKernerlEmailService linuxKernerlEmailService;
+    LinuxKernelEmailService linuxKernelEmailService;
 
     /** 通用的 Jackson 对象映射器。*/
     private final ObjectMapper objectMapper;
@@ -61,7 +61,7 @@ public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
 
     /** 用内核补丁邮件的内容格式化用户指令提示词。*/
     private AIModelChatMessage
-    formatUserRolePrompt(PlainTextEmail kernalEmail)
+    formatUserRolePrompt(PlainTextEmail kernelEmail)
     {
         try
         {
@@ -74,11 +74,11 @@ public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
             AIModelChatMessage(
                 "user",
                 userRolePromptPattern.formatted(
-                    kernalEmail.getMessageId(),
-                    kernalEmail.getFrom(),
-                    kernalEmail.getKernelTime(),
-                    kernalEmail.getSubject(),
-                    kernalEmail.getTextContent()
+                    kernelEmail.getMessageId(),
+                    kernelEmail.getFrom(),
+                    kernelEmail.getKernelTime(),
+                    kernelEmail.getSubject(),
+                    kernelEmail.getTextContent()
                 )
             );
         }
@@ -168,7 +168,7 @@ public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
                       .readValue(responseJSON, AIModelAnswerResponse.class);
 
             // (4) 将指定 id 的邮件与指定的分析任务关联
-            this.linuxKernerlEmailService
+            this.linuxKernelEmailService
                 .updateTaskIdById(kernelEmailId, analyzeResponse.getId());
 
             // (5) 流转本邮件的状态为 分析成功

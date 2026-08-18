@@ -1,8 +1,8 @@
 package com.jesse.analyze_report_discuss.components.report_cache.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jesse.analyze_report_discuss.components.report_cache.KenelEmailAnalyzeReportCacher;
-import com.jesse.analyze_report_discuss.dto.KenelEmailAnalyzeReport;
+import com.jesse.analyze_report_discuss.components.report_cache.KernelEmailAnalyzeReportCacher;
+import com.jesse.analyze_report_discuss.dto.KernelEmailAnalyzeReport;
 import com.jesse.analyze_report_discuss.repository.KernelEmailAnalyzeReportRepository;
 import com.jesse.core.properties.AnalyzeReportCacheProperties;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +24,8 @@ import java.util.function.BiFunction;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class KenelEmailAnalyzeReportRedisCacher
-    implements KenelEmailAnalyzeReportCacher
+public class KernelEmailAnalyzeReportRedisCacher
+    implements KernelEmailAnalyzeReportCacher
 {
     /** 内核邮件分析报告仓储类。*/
     private final
@@ -75,24 +75,24 @@ public class KenelEmailAnalyzeReportRedisCacher
      * 由于 Redis 中缓存的 JSON 没有携带类型信息，
      * 本方法负责做安全的类型转换。
      */
-    private Optional<KenelEmailAnalyzeReport>
+    private Optional<KernelEmailAnalyzeReport>
     safeConvert(Object object)
     {
         Objects.requireNonNull(object, "Parameter [object] must not be empty!");
 
-        if (object instanceof KenelEmailAnalyzeReport report) {
+        if (object instanceof KernelEmailAnalyzeReport report) {
             return Optional.of(report);
         }
 
         return
         Optional.of(
             this.objectMapper
-                .convertValue(object, KenelEmailAnalyzeReport.class)
+                .convertValue(object, KernelEmailAnalyzeReport.class)
         );
     }
 
     /** 若缓存被击穿，则加锁去数据库读取再重新写入缓存。*/
-    private Optional<KenelEmailAnalyzeReport> load(String taskId)
+    private Optional<KernelEmailAnalyzeReport> load(String taskId)
     {
         final String key
             = this.concatCacheKey(taskId);
@@ -125,7 +125,7 @@ public class KenelEmailAnalyzeReportRedisCacher
                     }
 
                     // (4) 从数据库读取
-                    final Optional<KenelEmailAnalyzeReport> loadedAnalyzeReport
+                    final Optional<KernelEmailAnalyzeReport> loadedAnalyzeReport
                         = this.kernelEmailAnalyzeReportRepository.getReport(taskId);
 
                     // (5) 更新缓存后返回
@@ -171,7 +171,7 @@ public class KenelEmailAnalyzeReportRedisCacher
 
     /** 尝试从缓存中获取分析报告数据。*/
     @Override
-    public Optional<KenelEmailAnalyzeReport> getOrLoad(String taskId)
+    public Optional<KernelEmailAnalyzeReport> getOrLoad(String taskId)
     {
         final String key
             = this.concatCacheKey(taskId);

@@ -48,13 +48,13 @@ public class LKMLAnalyzeTemplateGeneratorImpl implements LKMLAnalyzeTemplateGene
             context.setLocale(Locale.getDefault());
             context.setVariable("data", data);
 
-            final String analyzeReeportContent
+            final String analyzeReportContent
                 = this.templateEngine.process(TEMPLATE_NAME, context);
 
             this.kernelEmailStateMachine
                 .fireEvent(kernelEmailId, KernelEmailEvents.GENERATE_SUCCESS);
 
-            return analyzeReeportContent;
+            return analyzeReportContent;
         }
         catch (TemplateEngineException exception)
         {

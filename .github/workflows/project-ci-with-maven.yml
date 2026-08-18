@@ -1,7 +1,7 @@
 name: Project CI With Maven
 
 # 在对 develop 和 main 分支
-# 发起推送或者 PS 的时候执行本 CI 脚本
+# 发起推送或者 PR 的时候执行本 CI 脚本
 on:
   push:
     branches: [ "develop", "main" ]
@@ -29,7 +29,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'          # 自动缓存 Maven 依赖，加速后续构建
 
-      # 用 Maven 构建想项目
+      # 用 Maven 构建项目
       - name: Build with Maven
         run: mvn -B clean package --file pom.xml -DskipTests   # 先不跑测试，加快反馈
 

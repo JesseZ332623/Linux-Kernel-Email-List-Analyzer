@@ -45,7 +45,7 @@ public class AnalyzeReportDiscussController
 
         emitter.onError((exception) ->
             log.error(
-                "SEE error. (request: {}, duration: {} ms), Caused by: {}",
+                "SSE error. (request: {}, duration: {} ms), Caused by: {}",
                 request.toString(),
                 System.currentTimeMillis() - startTimestamp,
                 exception.getMessage()
@@ -100,7 +100,7 @@ public class AnalyzeReportDiscussController
         catch (Exception exception)
         {
             log.error(
-                "Unexcepted error during discuss initialization.",
+                "Unexpected error during discuss initialization.",
                 exception
             );
 

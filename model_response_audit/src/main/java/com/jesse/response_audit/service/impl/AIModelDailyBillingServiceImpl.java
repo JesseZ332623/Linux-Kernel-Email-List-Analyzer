@@ -136,7 +136,7 @@ public class AIModelDailyBillingServiceImpl implements AIModelDailyBillingServic
         {
             throw new
             IllegalStateException(
-                "Precious daily billing is still saving, skip this round."
+                "Previous daily billing is still saving, skip this round."
             );
         }
 

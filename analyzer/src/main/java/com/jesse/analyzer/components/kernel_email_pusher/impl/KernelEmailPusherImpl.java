@@ -3,8 +3,8 @@ package com.jesse.analyzer.components.kernel_email_pusher.impl;
 import com.jesse.analyzer.components.kernel_email_pusher.KernelEmailPusher;
 import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
-import com.jesse.core.entity.LinuxKernelEmailEntiy;
-import com.jesse.analyzer.repository.LinuxKernerlEmailRepository;
+import com.jesse.core.entity.LinuxKernelEmailEntity;
+import com.jesse.analyzer.repository.LinuxKernelEmailRepository;
 import com.jesse.core.components.global_id.GlobalIdConsumer;
 import com.jesse.core.components.imap_connection.SingleImapConnection;
 import com.jesse.core.pojo.PlainTextEmail;
@@ -87,7 +87,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
 
     /** 内核邮件数据表仓储类。*/
     private final
-    LinuxKernerlEmailRepository linuxKernerlEmailRepository;
+    LinuxKernelEmailRepository linuxKernelEmailRepository;
 
     /** 内核邮件状态机接口。*/
     private final
@@ -99,7 +99,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
 
     /** 单次推送的邮件数量。*/
     @Value("${app.lkml-push-limit}")
-    private int kernalEmailPushLimit;
+    private int kernelEmailPushLimit;
 
     /** 构造默认的邮件标记（阅后即焚）。*/
     private static Flags defaultFlags()
@@ -288,7 +288,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
             }
 
             // (1) 由于 IMAP 协议的限制，
-            // 只能一次性全量拉去未读邮件再做筛选，
+            // 只能一次性全量拉取未读邮件再做筛选，
             // 后续的标记操作也需要这个数组。
             final Message[] messages
                 = this.reverseUnreadMessages(inbox.search(flagTerm), limit)
@@ -343,8 +343,8 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
     {
         final long nextId = this.globalIdConsumer.nextId();
 
-        this.linuxKernerlEmailRepository
-            .insert(LinuxKernelEmailEntiy.fromPlainTextEmail(nextId, kernelEmail));
+        this.linuxKernelEmailRepository
+            .insert(LinuxKernelEmailEntity.fromPlainTextEmail(nextId, kernelEmail));
 
         return Map.of(nextId, kernelEmail);
     }
@@ -407,7 +407,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
 
             // (1) 从邮箱服务拉取所有的未读邮件，保留最新的前 limit 封返回。
             final Message[] messages
-                = this.fetchUnreadPlainTextEmails(inbox, kernalEmailPushLimit);
+                = this.fetchUnreadPlainTextEmails(inbox, kernelEmailPushLimit);
 
             // (2) 将邮件数据分片
             final List<List<Message>> splitMessages

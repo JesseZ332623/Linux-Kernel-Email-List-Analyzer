@@ -2,9 +2,9 @@ package com.jesse.analyze_report_discuss.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.jesse.analyze_report_discuss.components.report_cache.KenelEmailAnalyzeReportCacher;
+import com.jesse.analyze_report_discuss.components.report_cache.KernelEmailAnalyzeReportCacher;
 import com.jesse.analyze_report_discuss.dto.ConversationsBySessionId;
-import com.jesse.analyze_report_discuss.dto.KenelEmailAnalyzeReport;
+import com.jesse.analyze_report_discuss.dto.KernelEmailAnalyzeReport;
 import com.jesse.analyze_report_discuss.dto.SessionCountByTaskId;
 import com.jesse.analyze_report_discuss.exception.DiscussSessionException;
 import com.jesse.analyze_report_discuss.repository.AnalyzeReportDiscussSessionDetailsRepository;
@@ -41,7 +41,7 @@ public class AnalyzeReportDiscussSessionServiceImpl
 
     /** 内核邮件分析报告 Redis 缓存器接口。*/
     private final
-    KenelEmailAnalyzeReportCacher kenelEmailAnalyzeReportCacher;
+    KernelEmailAnalyzeReportCacher kernelEmailAnalyzeReportCacher;
 
     /** Linux 内核邮件分析报告疑惑解答会话对话内容表仓储类。*/
     private final
@@ -147,8 +147,8 @@ public class AnalyzeReportDiscussSessionServiceImpl
 
         // 邮件的标题从缓存中拿，如果是本报告下的第一个会话，
         // 则直接触发缓存更新。
-        final Optional<KenelEmailAnalyzeReport> analyzeReport
-            = this.kenelEmailAnalyzeReportCacher.getOrLoad(taskId);
+        final Optional<KernelEmailAnalyzeReport> analyzeReport
+            = this.kernelEmailAnalyzeReportCacher.getOrLoad(taskId);
 
         final String emailSubject
             = analyzeReport.orElseThrow(() -> DiscussSessionException.make(taskId))

@@ -14,7 +14,7 @@ import java.math.RoundingMode;
  * DeepSeek-V4-Flash Token 费计算公式：
  * 百万输入词元 (缓存命中)   * 0.02  +
  * 百万输入词元 (缓存未命中) * 1.00   +
- * 百万输出词源              * 2.00
+ * 百万输出词元              * 2.00
  * </pre>
  */
 @NoArgsConstructor
@@ -42,15 +42,15 @@ public class DeepSeekV4FlashTokenCalculator implements ModelTokenCalculator
     {
         final BigDecimal promptCacheHitTokens
             = BigDecimal.valueOf(modelAnswerUsage.getPromptCacheHitTokens())
-            .divide(ONE_MILLION, PRCESION, RoundingMode.HALF_UP);
+            .divide(ONE_MILLION, PRECISION, RoundingMode.HALF_UP);
 
         final BigDecimal promptCacheMissTokens
             = BigDecimal.valueOf(modelAnswerUsage.getPromptCacheMissTokens())
-            .divide(ONE_MILLION, PRCESION, RoundingMode.HALF_UP);
+            .divide(ONE_MILLION, PRECISION, RoundingMode.HALF_UP);
 
         final BigDecimal completionTokens
             = BigDecimal.valueOf(modelAnswerUsage.getCompletionTokens())
-            .divide(ONE_MILLION, PRCESION, RoundingMode.HALF_UP);
+            .divide(ONE_MILLION, PRECISION, RoundingMode.HALF_UP);
 
         final BigDecimal standardPrice
             = promptCacheHitTokens.multiply(PROMPT_CACHE_HIT_PRICE)

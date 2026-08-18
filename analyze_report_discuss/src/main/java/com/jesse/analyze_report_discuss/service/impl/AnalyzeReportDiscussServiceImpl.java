@@ -2,12 +2,12 @@ package com.jesse.analyze_report_discuss.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jesse.analyze_report_discuss.components.discuss_abstract.AnalyzeReportDiscussAbstractor;
-import com.jesse.analyze_report_discuss.components.discuss_session_lock.DiscussSessionLockGurard;
+import com.jesse.analyze_report_discuss.components.discuss_session_lock.DiscussSessionLockGuard;
 import com.jesse.analyze_report_discuss.components.prompt_reader.ModelPromptReader;
 import com.jesse.analyze_report_discuss.components.report_cache.AnalyzerReportDiscussAbstractCacher;
-import com.jesse.analyze_report_discuss.components.report_cache.KenelEmailAnalyzeReportCacher;
+import com.jesse.analyze_report_discuss.components.report_cache.KernelEmailAnalyzeReportCacher;
 import com.jesse.analyze_report_discuss.components.sse_callback.SSECallBack;
-import com.jesse.analyze_report_discuss.dto.KenelEmailAnalyzeReport;
+import com.jesse.analyze_report_discuss.dto.KernelEmailAnalyzeReport;
 import com.jesse.analyze_report_discuss.exception.DiscussException;
 import com.jesse.analyze_report_discuss.request.ReportDiscussRequest;
 import com.jesse.analyze_report_discuss.service.AnalyzeReportDiscussService;
@@ -57,7 +57,7 @@ public class AnalyzeReportDiscussServiceImpl
 
     /** 内核邮件分析报告缓存器接口。*/
     private final
-    KenelEmailAnalyzeReportCacher analyzeReportCacher;
+    KernelEmailAnalyzeReportCacher analyzeReportCacher;
 
     /** 内核邮件分析报告讨论记录摘要缓存器接口。*/
     private final
@@ -67,7 +67,7 @@ public class AnalyzeReportDiscussServiceImpl
     private final
     AnalyzeReportDiscussAbstractor analyzeReportDiscussAbstractor;
 
-    /** OK HTTP 客户端，专用与处理 SSE 协议的响应数据。*/
+    /** OK HTTP 客户端，专用于处理 SSE 协议的响应数据。*/
     private final OkHttpClient okHttpClient;
 
     /** 自定义 OK HTTP 工具类。*/
@@ -84,7 +84,7 @@ public class AnalyzeReportDiscussServiceImpl
 
     /** 讨论会话锁管理器接口。*/
     private final
-    DiscussSessionLockGurard discussSessionLockGurard;
+    DiscussSessionLockGuard discussSessionLockGuard;
 
     /** 构建异步响应处理回调实例。*/
     private Callback newSSECallback(
@@ -103,7 +103,7 @@ public class AnalyzeReportDiscussServiceImpl
             this.aiModelAnswerAuditService,
             this.analyzeReportDiscussAbstractor,
             this.analyzeReportDiscussExecutor,
-            this.discussSessionLockGurard
+            this.discussSessionLockGuard
         );
     }
 
@@ -114,7 +114,7 @@ public class AnalyzeReportDiscussServiceImpl
     {
         // 2026.08.06 修复，对于同一个对话下，讨论的发起必须是串行的，
         // 这也是所有 AI 产品的设计标准，所以此处需要使用锁控制并发。
-        if (!this.discussSessionLockGurard.tryAcquire(discussRequest.getSessionId()))
+        if (!this.discussSessionLockGuard.tryAcquire(discussRequest.getSessionId()))
         {
             throw new
             DiscussException(
@@ -139,7 +139,7 @@ public class AnalyzeReportDiscussServiceImpl
                   .insertNewSessionDetail(sessionId, question);
 
         // (2) 从缓存中拿分析报告文本
-        final KenelEmailAnalyzeReport analyzeReport
+        final KernelEmailAnalyzeReport analyzeReport
             = this.analyzeReportCacher.getOrLoad(taskId)
                   .orElseThrow(() -> {
                       log.error("Analyze report (which id = {}) not exist.", discussRequest.getTaskId());

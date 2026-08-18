@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jesse.analyze_report_discuss.components.discuss_abstract.AnalyzeReportDiscussAbstractor;
 import com.jesse.analyze_report_discuss.components.prompt_reader.ModelPromptReader;
 import com.jesse.analyze_report_discuss.components.report_cache.AnalyzerReportDiscussAbstractCacher;
-import com.jesse.analyze_report_discuss.components.report_cache.KenelEmailAnalyzeReportCacher;
-import com.jesse.analyze_report_discuss.dto.KenelEmailAnalyzeReport;
+import com.jesse.analyze_report_discuss.components.report_cache.KernelEmailAnalyzeReportCacher;
+import com.jesse.analyze_report_discuss.dto.KernelEmailAnalyzeReport;
 import com.jesse.analyze_report_discuss.exception.DiscussException;
-import com.jesse.analyze_report_discuss.request.DiscussAbstractReqest;
+import com.jesse.analyze_report_discuss.request.DiscussAbstractRequest;
 import com.jesse.core.annotation.TimeMonitor;
 import com.jesse.core.utils.HttpClientUtils;
 import com.jesse.core.properties.DeepSeekAnalyzerReportDiscussProperties;
@@ -43,7 +43,7 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
 
     /** 内核邮件分析报告缓存器接口。*/
     private final
-    KenelEmailAnalyzeReportCacher analyzeReportCacher;
+    KernelEmailAnalyzeReportCacher analyzeReportCacher;
 
     /** 内核邮件分析报告讨论记录摘要缓存器接口。*/
     private final
@@ -67,14 +67,14 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
 
     /** 生成摘要任务用户提示词。*/
     private String
-    generateAbstractUserPrompt(DiscussAbstractReqest reqest)
+    generateAbstractUserPrompt(DiscussAbstractRequest request)
     {
-        // (1) 获取 核邮件分析报告答疑解惑上下文摘要模型配置
+        // (1) 获取 内核邮件分析报告答疑解惑上下文摘要模型配置
         final DeepSeekChatProperties properties
             = this.analyzerReportDiscussProperties
                   .getAnalyzerReportChatAbstractProp();
 
-        final String taskId = reqest.getTaskId();
+        final String taskId = request.getTaskId();
 
         // (2) 读取摘要任务用户提示词模板
         final String promptTemplate
@@ -83,7 +83,7 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
                   .orElseThrow(() -> new DiscussException("Abstract user prompt file not exist."));
 
         // (3) 从缓存中获取邮件文本和分析报告信息
-        final KenelEmailAnalyzeReport analyzeReport
+        final KernelEmailAnalyzeReport analyzeReport
             = this.analyzeReportCacher.getOrLoad(taskId)
                   .orElseThrow(() -> {
                       log.error("Analyze report (which id = {}) not exist.", taskId);
@@ -92,7 +92,7 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
 
         // (4) 模型的回复文本不需要回表查，上游直接传递即可
         final String modelAnswerContent
-            = reqest.getAgregatedResponse().getChoices().getFirst()
+            = request.getAggregatedResponse().getChoices().getFirst()
                     .getMessage()
                     .getContent();
 
@@ -101,7 +101,7 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
             analyzeReport.getEmailSubject(),
             analyzeReport.getEmailContent(),
             analyzeReport.getReportContent(),
-            reqest.getQuestion(),
+            request.getQuestion(),
             modelAnswerContent
         );
     }
@@ -116,7 +116,7 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
         timeunit      = TimeUnit.SECONDS
     )
     public void
-    discussAbstract(DiscussAbstractReqest reqest)
+    discussAbstract(DiscussAbstractRequest request)
     {
         // (1) 获取摘要任务的模型属性
         final DeepSeekChatProperties properties
@@ -136,7 +136,7 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
 
         // (4) 读取并填充摘要任务的用户提示词
         final String abstractUserPrompt
-            = this.generateAbstractUserPrompt(reqest);
+            = this.generateAbstractUserPrompt(request);
 
         // (5) 构造 HTTP 请求体和请求头
         final HttpEntity<AIModelChatRequest> httpEntity
@@ -165,7 +165,7 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
 
             // (8) 将上下文摘要缓存到会话中
             this.reportDiscussAbstractCacher.set(
-                reqest.getSessionId(),
+                request.getSessionId(),
                 abstractResponse.getChoices().getFirst().getMessage().getContent()
             );
 
@@ -176,7 +176,7 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
         {
             log.error(
                 "Abstract context for session: {} failed.",
-                reqest.getSessionId(), exception
+                request.getSessionId(), exception
             );
         }
     }

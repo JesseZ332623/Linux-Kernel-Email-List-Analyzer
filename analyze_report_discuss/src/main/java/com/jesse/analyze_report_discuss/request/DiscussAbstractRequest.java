@@ -9,7 +9,7 @@ import lombok.*;
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
-public class DiscussAbstractReqest
+public class DiscussAbstractRequest
 {
     /** 内核邮件分析报告 ID。*/
     private String taskId;
@@ -18,7 +18,7 @@ public class DiscussAbstractReqest
     private String sessionId;
 
     /** AI 模型回答响应体类。*/
-    private AIModelAnswerResponse agregatedResponse;
+    private AIModelAnswerResponse aggregatedResponse;
 
     /** 本轮对话提出的问题。*/
     private String question;

@@ -89,7 +89,7 @@ DEFAULT CHARSET=utf8mb4
 COLLATE=utf8mb4_0900_ai_ci
 COMMENT='AI 模型 token 资费消耗每日汇总表';
 
-CREATE TABLE `linux_kernal_email` (
+CREATE TABLE `linux_kernel_email` (
   `id`              BIGINT       NOT NULL,
   `task_id`         CHAR(36)     NOT NULL COMMENT '本次大模型请求的唯一标识符，用于追踪和问题排查',
   `status`  	    TINYINT      NOT NULL DEFAULT '0' COMMENT '本邮件在服务中流转的状态',

@@ -17,7 +17,7 @@ final public class ZoneUtils
     public static final
     ZoneId KERNEL_TIMEZONE = ZoneId.of("America/Los_Angeles");
 
-    /** 本地时区（中国上海 UTF+8）*/
+    /** 本地时区（中国上海 UTC+8）*/
     public static final
     ZoneId LOCAL_TIMEZONE = ZoneId.of("Asia/Shanghai");
 }

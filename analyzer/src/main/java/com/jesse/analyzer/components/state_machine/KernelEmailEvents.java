@@ -37,18 +37,18 @@ public enum KernelEmailEvents
     /** 邮件分析报告生成失败事件（GENERATING -> GENERATE_FAILED）*/
     GENERATE_FAILURE,
 
-    /** 邮件分析报告持久化开始事件（GENERATE_SUCCESS -> REPORT_PESISTING）*/
-    START_PESISTING,
+    /** 邮件分析报告持久化开始事件（GENERATE_SUCCESS -> REPORT_PERSISTING）*/
+    START_PERSISTING,
 
     /**
      * 邮件分析报告持久化成功事件
-     *（REPORT_PESISTING -> REPORT_PERSISTENCE_SUCCESS）
+     *（REPORT_PERSISTING -> REPORT_PERSISTENCE_SUCCESS）
      */
     PERSISTENCE_SUCCESS,
 
     /**
      * 邮件分析报告持久化失败事件
-     *（REPORT_PESISTING -> REPORT_PERSISTENCE_FAILED）
+     *（REPORT_PERSISTING -> REPORT_PERSISTENCE_FAILED）
      */
     PERSISTENCE_FAILURE
 }

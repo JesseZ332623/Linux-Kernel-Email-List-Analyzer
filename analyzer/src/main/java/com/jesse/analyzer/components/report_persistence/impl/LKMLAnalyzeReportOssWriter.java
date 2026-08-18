@@ -51,7 +51,7 @@ public class LKMLAnalyzeReportOssWriter implements LKMLAnalyzeReportWriter
 
         // (1) 先替换所有非法字符为下划线
         String finalSubject
-            = RegexUtils.AWS_S3_ILLEGAL_CHRACTOR
+            = RegexUtils.AWS_S3_ILLEGAL_CHARACTER
                 .matcher(subject).replaceAll("_");
 
         // (2) 替换空格为连字符
@@ -77,7 +77,7 @@ public class LKMLAnalyzeReportOssWriter implements LKMLAnalyzeReportWriter
     {
         // (1) 流转邮件的状态为 “开始持久化”
         this.kernelEmailStateMachine
-            .fireEvent(kernelEmailId, KernelEmailEvents.START_PESISTING);
+            .fireEvent(kernelEmailId, KernelEmailEvents.START_PERSISTING);
 
         final String from    = plainTextEmail.getFrom();
         final String subject = plainTextEmail.getSubject();

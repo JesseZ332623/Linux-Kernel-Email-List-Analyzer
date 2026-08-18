@@ -10,7 +10,7 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 @NoArgsConstructor
-public class KenelEmailAnalyzeReport
+public class KernelEmailAnalyzeReport
 {
     /** 内核邮件标题 */
     private String emailSubject;

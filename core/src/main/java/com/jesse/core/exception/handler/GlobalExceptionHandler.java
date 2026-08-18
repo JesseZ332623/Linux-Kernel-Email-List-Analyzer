@@ -37,7 +37,7 @@ public class GlobalExceptionHandler
      * <ul>
      *     <li>（最常见的）客户端提前断开连接</li>
      *     <li>异步请求超时</li>
-     *     <li>步处理完成后继续写入</li>
+     *     <li>异步处理完成后继续写入</li>
      *     <li>I/O 写入失败</li>
      * </ul>
      *

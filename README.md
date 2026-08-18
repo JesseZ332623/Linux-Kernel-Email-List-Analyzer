@@ -34,7 +34,7 @@
 │  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
 │  │  bootstrap                                                                                                             │  │
 │  │                                                                                                                        │  │
-│  │  LinuxKernalEmailListAnalyzerApplication  (启动入口)                                                                   │  │
+│  │  LinuxKernelEmailListAnalyzerApplication  (启动入口)                                                                   │  │
 │  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
 │                                                                                                                              │
 │  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
@@ -55,7 +55,7 @@
 │  │       │                                                                                                                │  │
 │  │       │  1. IMAP 拉取未读邮件（批量 50，阅后即焚）                                                                      │  │
 │  │       │  2. 解析为 PlainTextEmail                                                                                      │  │
-│  │       │  3. 插入 linux_kernal_email 表（状态 = FETCHED）                                                               │  │
+│  │       │  3. 插入 linux_kernel_email 表（状态 = FETCHED）                                                               │  │
 │  │       │  4. 推送 RabbitMQ（状态 → PUSHED / PUSH_FAILED）                                                               │  │
 │  │       ▼                                                                                                                │  │
 │  │  RabbitMQ Queue (lkml)                                                                                                 │  │
@@ -83,7 +83,7 @@
 │  │       │                                                                                                                │  │
 │  │       │  1. DiscussSessionLockGuard                (会话串行锁，防并发)                                                 │  │
 │  │       │  2. 插入 ai_analyze_discuss_session_details                                                                    │  │
-│  │       │  3. KenelEmailAnalyzeReportRedisCacher     (从 Redis / DB 加载报告)                                            │  │
+│  │       │  3. KernelEmailAnalyzeReportRedisCacher     (从 Redis / DB 加载报告)                                            │  │
 │  │       │  4. ModelPromptReader + DiscussAbstractCacher                                                                  │  │
 │  │       │         (系统 / 用户提示词 + 历史摘要)                                                                          │  │
 │  │       │  5. OkHttp SSE 调用 DeepSeek（流式）                                                                           │  │
@@ -185,7 +185,7 @@ linux_kernel_email_list_analyzer (父 POM)
 
 - [分析报告讨论上下文 DeepSeek 摘要器实现](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/develop/analyze_report_discuss/src/main/java/com/jesse/analyze_report_discuss/components/discuss_abstract/impl/AnalyzeReportDiscussDeepSeekAbstractor.java)
 
-- [内核邮件分析报告 Redis 缓存器实现](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/develop/analyze_report_discuss/src/main/java/com/jesse/analyze_report_discuss/components/report_cache/impl/KenelEmailAnalyzeReportRedisCacher.java)
+- [内核邮件分析报告 Redis 缓存器实现](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/develop/analyze_report_discuss/src/main/java/com/jesse/analyze_report_discuss/components/report_cache/impl/KernelEmailAnalyzeReportRedisCacher.java)
 
 - [Linux 内核邮件分析报告疑惑解答会话表服务实现类](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/develop/analyze_report_discuss/src/main/java/com/jesse/analyze_report_discuss/service/impl/AnalyzeReportDiscussSessionServiceImpl.java)
 
@@ -195,6 +195,6 @@ linux_kernel_email_list_analyzer (父 POM)
 
 ## LICENCE
 
-[Apache License Version 2.0](https://github.com/JesseZ332623/Linux-Kernal-Email-List-Analyzer/blob/main/LICENSE)
+[Apache License Version 2.0](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/main/LICENSE)
 
 ## 2026.08.18
