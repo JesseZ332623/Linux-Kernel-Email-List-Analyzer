@@ -3,7 +3,7 @@ package com.jesse.analyze_report_discuss.components.discuss_session_lock;
 import java.util.Map;
 
 /** 讨论会话锁管理器接口。*/
-public interface DiscussSessionLockGurard
+public interface DiscussSessionLockGuard
 {
     /** 尝试获得锁。*/
     boolean tryAcquire(String sessionId);
