@@ -42,7 +42,7 @@ public class LKMLAnalyzeReportLocalFileSystemWriter implements LKMLAnalyzeReport
         }
 
         final String reportName
-            = RegexUtils.ILLEGAL_CHARACTOR_PATTERN
+            = RegexUtils.ILLEGAL_CHARACTER_PATTERN
                         .matcher(subject).replaceAll("_");
 
         final int maxFileNameLen
@@ -60,7 +60,7 @@ public class LKMLAnalyzeReportLocalFileSystemWriter implements LKMLAnalyzeReport
     {
         // (1) 流转邮件的状态为 “开始持久化”
         this.kernelEmailStateMachine
-            .fireEvent(kernelEmailId, KernelEmailEvents.START_PESISTING);
+            .fireEvent(kernelEmailId, KernelEmailEvents.START_PERSISTING);
 
         final String from    = plainTextEmail.getFrom();
         final String subject = plainTextEmail.getSubject();
