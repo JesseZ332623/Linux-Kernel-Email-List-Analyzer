@@ -11,7 +11,7 @@ public interface ModelTokenCalculator
     BigDecimal ONE_MILLION = new BigDecimal("1000000");
 
     /** 资费计算精度 */
-    int PRCESION = 12;
+    int PRECISION = 12;
 
     /**
      * 根据上游数据库聚合而来的 Token 用量信息，
