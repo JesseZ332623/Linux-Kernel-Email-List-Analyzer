@@ -1,6 +1,6 @@
 package com.jesse.analyze_report_discuss.components.discuss_session_lock.impl;
 
-import com.jesse.analyze_report_discuss.components.discuss_session_lock.DiscussSessionLockGurard;
+import com.jesse.analyze_report_discuss.components.discuss_session_lock.DiscussSessionLockGuard;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DiscussSessionLockGurardImpl implements DiscussSessionLockGurard
+public class DiscussSessionLockGuardImpl implements DiscussSessionLockGuard
 {
     /** 锁过期时间，超过这个时间还未被使用过的锁会被清理。*/
     private static final
@@ -71,7 +71,7 @@ public class DiscussSessionLockGurardImpl implements DiscussSessionLockGurard
             = this.generationFlags.size();
 
         this.generationFlags.values()
-            .removeIf(DiscussSessionLockGurardImpl::isExpired);
+            .removeIf(DiscussSessionLockGuardImpl::isExpired);
 
         final int removedCount
             = before - this.generationFlags.size();
@@ -107,7 +107,7 @@ public class DiscussSessionLockGurardImpl implements DiscussSessionLockGurard
         final LockEntry lockEntry
             = this.generationFlags.get(sessionId);
 
-        // (2) 翻转标准位并更新使用时间
+        // (2) 翻转标志位并更新使用时间
         if (Objects.nonNull(lockEntry))
         {
             lockEntry.getLocked().set(false);
