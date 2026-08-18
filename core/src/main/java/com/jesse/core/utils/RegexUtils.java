@@ -11,12 +11,12 @@ final public class RegexUtils
 {
     /** Windows 非法文件名字符正则表达式匹配。*/
     public static final
-    Pattern ILLEGAL_CHARACTOR_PATTERN
+    Pattern ILLEGAL_CHARACTER_PATTERN
         = Pattern.compile("[<>:\"/\\\\|?*=()]");
 
     /** AWS S3 标准下的非法文件名字符正则。*/
     public static final
-    Pattern AWS_S3_ILLEGAL_CHRACTOR
+    Pattern AWS_S3_ILLEGAL_CHARACTER
         = Pattern.compile("[\\\\/:*?\"<>|]");
 
     /** 匹配空格的正则。*/
