@@ -34,7 +34,7 @@ public class OkHttpConfig
         Executors.newThreadPerTaskExecutor(threadFactory);
     }
 
-    /** 配置 HTTP 客户端，专用与处理 SSE 协议的响应数据。*/
+    /** 配置 HTTP 客户端，专用于处理 SSE 协议的响应数据。*/
     @Bean
     public OkHttpClient okHttpClient()
     {
