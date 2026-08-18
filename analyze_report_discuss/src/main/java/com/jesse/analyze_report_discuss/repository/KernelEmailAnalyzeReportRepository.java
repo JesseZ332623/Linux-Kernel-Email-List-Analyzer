@@ -1,6 +1,6 @@
 package com.jesse.analyze_report_discuss.repository;
 
-import com.jesse.analyze_report_discuss.dto.KenelEmailAnalyzeReport;
+import com.jesse.analyze_report_discuss.dto.KernelEmailAnalyzeReport;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -27,7 +27,7 @@ public interface KernelEmailAnalyzeReportRepository
         WHERE
         	lkml.task_id = #{taskId}
     """)
-    Optional<KenelEmailAnalyzeReport>
+    Optional<KernelEmailAnalyzeReport>
     getReport(@Param("taskId") String taskId);
 
     /** 查询所有完成了分析的内核邮件的 task_id */
