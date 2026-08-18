@@ -7,7 +7,7 @@ server:
 
 spring:
   application:
-    name: linux_kernal_email_list_analyzer
+    name: linux_kernel_email_list_analyzer
 
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
