@@ -53,7 +53,7 @@ services:
 
     # 健康检查属性配置
     healthcheck:
-      # CMD 是 docker healthckeck 的两个执行模型关键字
+      # CMD 是 docker healthcheck 的两个执行模式关键字
       # 直接调用后面列出的可执行文件 + 选项参数
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pjesse_root"]
       interval: 10s # 执行间隔（从上一次执行完毕后算起）
@@ -61,7 +61,7 @@ services:
       retries: 3    # 连续失败 3 次就标记为不健康
       start_period: 60s # 启动宽限期，这段时间失败不计入 retries
 
-    # 将 MySQL 容器加入 app-network 这个自定义网格
+    # 将 MySQL 容器加入 app-network 这个自定义网络
     networks:
       - app-network
 
@@ -87,7 +87,7 @@ services:
       timeout: 3s
       retries: 3
 
-    # 将 Redis 容器加入 app-network 这个自定义网格
+    # 将 Redis 容器加入 app-network 这个自定义网络
     networks:
       - app-network
 
@@ -111,7 +111,7 @@ services:
       timeout: 3s
       retries: 3
 
-    # 将 RabbitMQ 容器加入 app-network 这个自定义网格
+    # 将 RabbitMQ 容器加入 app-network 这个自定义网络
     networks:
       - app-network
 
