@@ -2,12 +2,12 @@ package com.jesse.analyzer.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jesse.core.enums.KernelEmailStatus;
-import com.jesse.core.entity.LinuxKernelEmailEntiy;
+import com.jesse.core.entity.LinuxKernelEmailEntity;
 import com.jesse.core.pojo.PlainTextEmail;
 
 /** 内核邮件数据表服务接口类。*/
-public interface LinuxKernerlEmailService
-    extends IService<LinuxKernelEmailEntiy>
+public interface LinuxKernelEmailService
+    extends IService<LinuxKernelEmailEntity>
 {
     /** 插入一条新内核邮件数据，返回这条数据的 ID。*/
     long insertNew(PlainTextEmail email);
