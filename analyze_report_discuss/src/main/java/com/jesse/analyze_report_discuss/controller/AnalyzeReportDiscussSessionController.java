@@ -165,7 +165,7 @@ public class AnalyzeReportDiscussSessionController
             return
             CustomizedResponse.responseOf(
                 response, HttpStatus.BAD_REQUEST,
-                format("Parameter [taskId] is invalid (whitch is : %s)", taskId),
+                format("Parameter [taskId] is invalid (which is : %s)", taskId),
                 ""
             );
         }
