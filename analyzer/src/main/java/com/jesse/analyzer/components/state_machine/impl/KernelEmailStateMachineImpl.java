@@ -5,7 +5,7 @@ import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
 import com.jesse.core.enums.KernelEmailStatus;
 import com.jesse.analyzer.config.KernelEmailStateMachineConfig;
 import com.jesse.analyzer.dto.KernelEmailStatusOnly;
-import com.jesse.analyzer.repository.LinuxKernerlEmailRepository;
+import com.jesse.analyzer.repository.LinuxKernelEmailRepository;
 import com.jesse.core.exception.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +36,7 @@ public class KernelEmailStateMachineImpl implements KernelEmailStateMachine
     StateMachineFactory<KernelEmailStatus, KernelEmailEvents> stateMachineFactory;
 
     /** 内核邮件数据表仓储类。*/
-    private final LinuxKernerlEmailRepository linuxKernerlEmailRepository;
+    private final LinuxKernelEmailRepository linuxKernelEmailRepository;
 
     /** 获取当前重试次数。*/
     private int getCurrentRetryCount()
@@ -72,7 +72,7 @@ public class KernelEmailStateMachineImpl implements KernelEmailStateMachine
 
         // (1) 查询当前这封邮件的状态
         final KernelEmailStatusOnly emailStatus
-            = this.linuxKernerlEmailRepository.selectStatusAndVersion(emailId);
+            = this.linuxKernelEmailRepository.selectStatusAndVersion(emailId);
 
         // (2) 构造新的状态机
         final StateMachine<KernelEmailStatus, KernelEmailEvents>
@@ -122,7 +122,7 @@ public class KernelEmailStateMachineImpl implements KernelEmailStateMachine
 
         // (7) 将新状态写回数据库
         final int updated
-            = this.linuxKernerlEmailRepository
+            = this.linuxKernelEmailRepository
                   .updateStatusWithOptimisticLock(
                       emailId,
                       currentStatus.getCode(), newStatus.getCode(),
