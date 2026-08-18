@@ -55,7 +55,7 @@
 │  │       │                                                                                                                │  │
 │  │       │  1. IMAP 拉取未读邮件（批量 50，阅后即焚）                                                                      │  │
 │  │       │  2. 解析为 PlainTextEmail                                                                                      │  │
-│  │       │  3. 插入 linux_kernal_email 表（状态 = FETCHED）                                                               │  │
+│  │       │  3. 插入 linux_kernel_email 表（状态 = FETCHED）                                                               │  │
 │  │       │  4. 推送 RabbitMQ（状态 → PUSHED / PUSH_FAILED）                                                               │  │
 │  │       ▼                                                                                                                │  │
 │  │  RabbitMQ Queue (lkml)                                                                                                 │  │
@@ -195,6 +195,6 @@ linux_kernel_email_list_analyzer (父 POM)
 
 ## LICENCE
 
-[Apache License Version 2.0](https://github.com/JesseZ332623/Linux-Kernal-Email-List-Analyzer/blob/main/LICENSE)
+[Apache License Version 2.0](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/main/LICENSE)
 
 ## 2026.08.18
