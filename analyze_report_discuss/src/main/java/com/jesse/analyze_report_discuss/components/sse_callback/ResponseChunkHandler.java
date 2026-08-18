@@ -107,7 +107,7 @@ public class ResponseChunkHandler
             else
             {
                 log.error(
-                    "Unexcepted exception with sending SSE chunk (model response id = {})",
+                    "Unexpected exception with sending SSE chunk (model response id = {})",
                     responseChunk.getId(), exception
                 );
 
