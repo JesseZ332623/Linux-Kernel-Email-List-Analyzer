@@ -52,7 +52,7 @@ public enum KernelEmailStatus
 
     /**
      * 状态码，Mybatis-Plus 会取这个值
-     * 作为 linux_kernal_email.status 字段的值。
+     * 作为 linux_kernel_email.status 字段的值。
      */
     @EnumValue
     private final int code;
