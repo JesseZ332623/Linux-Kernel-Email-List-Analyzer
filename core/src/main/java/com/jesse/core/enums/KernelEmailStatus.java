@@ -42,7 +42,7 @@ public enum KernelEmailStatus
     GENERATE_FAILED(9, "Analyze Report Generate Failed"),
 
     /** 分析报告持久化中 */
-    REPORT_PESISTING(10, "Analyze Report Persisting In"),
+    REPORT_PERSISTING(10, "Analyze Report Persisting In"),
 
     /** 分析报告持久化成功 */
     REPORT_PERSISTENCE_SUCCESS(11, "Analyze Report Persistence Success"),
