@@ -71,14 +71,14 @@ public class KernelEmailStateMachineConfig
                 .event(KernelEmailEvents.GENERATE_FAILURE)
             .and().withExternal()
                 .source(KernelEmailStatus.GENERATE_SUCCESS)
-                .target(KernelEmailStatus.REPORT_PESISTING)
-                .event(KernelEmailEvents.START_PESISTING)
+                .target(KernelEmailStatus.REPORT_PERSISTING)
+                .event(KernelEmailEvents.START_PERSISTING)
             .and().withExternal()
-                .source(KernelEmailStatus.REPORT_PESISTING)
+                .source(KernelEmailStatus.REPORT_PERSISTING)
                 .target(KernelEmailStatus.REPORT_PERSISTENCE_SUCCESS)
                 .event(KernelEmailEvents.PERSISTENCE_SUCCESS)
             .and().withExternal()
-                .source(KernelEmailStatus.REPORT_PESISTING)
+                .source(KernelEmailStatus.REPORT_PERSISTING)
                 .target(KernelEmailStatus.REPORT_PERSISTENCE_FAILED)
                 .event(KernelEmailEvents.PERSISTENCE_FAILURE);
     }
