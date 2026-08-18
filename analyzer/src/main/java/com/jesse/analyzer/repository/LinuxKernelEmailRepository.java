@@ -3,7 +3,7 @@ package com.jesse.analyzer.repository;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.jesse.core.enums.KernelEmailStatus;
 import com.jesse.analyzer.dto.KernelEmailStatusOnly;
-import com.jesse.core.entity.LinuxKernelEmailEntiy;
+import com.jesse.core.entity.LinuxKernelEmailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -11,8 +11,8 @@ import org.apache.ibatis.annotations.Update;
 
 /** 内核邮件数据表仓储类。*/
 @Mapper
-public interface LinuxKernerlEmailRepository
-    extends BaseMapper<LinuxKernelEmailEntiy>
+public interface LinuxKernelEmailRepository
+    extends BaseMapper<LinuxKernelEmailEntity>
 {
     /** 修改指定 taskId 的内核邮件的状态。*/
     @Update("""
