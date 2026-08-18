@@ -59,12 +59,12 @@ public class KernelEmailClassifierImpl implements KernelEmailClassifier
         /*
          * 如果这封邮件标题不是完全符合标准的，
          * 则把他代入标题降级分类正则表进一步匹配，
-         * 如果还是找不到则返回 UNKNOW，确保不丢件。
+         * 如果还是找不到则返回 UNKNOWN，确保不丢件。
          */
         if (!matcher.find())
         {
             log.warn(
-                "Subject: {} is not a stanard LKML, " +
+                "Subject: {} is not a standard LKML, " +
                 "try matching with fallback patterns.",
                 subject
             );
@@ -111,7 +111,7 @@ public class KernelEmailClassifierImpl implements KernelEmailClassifier
 
             // 剔除非法字符且把连续的空白字符都替换成 '-'
             return
-            email.replaceAll(RegexUtils.ILLEGAL_CHARACTOR_PATTERN.pattern(), "")
+            email.replaceAll(RegexUtils.ILLEGAL_CHARACTER_PATTERN.pattern(), "")
                  .replaceAll("\\s+", "-");
         }
 
