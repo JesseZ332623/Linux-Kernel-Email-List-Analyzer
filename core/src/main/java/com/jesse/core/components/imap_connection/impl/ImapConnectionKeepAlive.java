@@ -35,7 +35,7 @@ public class ImapConnectionKeepAlive
     /** 连接保活任务是否正在执行（读多写少，不需要使用原子类型）。*/
     private volatile boolean running = true;
 
-    /** 执行保活任务操作的期值实例。*/
+    /** 执行保活任务操作的 Future 实例。*/
     private volatile ScheduledFuture<?> performKeepAliveFuture;
 
     /** 检查IMAP Connection 连接保活专用单线程执行器是否被意外关闭。*/
@@ -104,7 +104,7 @@ public class ImapConnectionKeepAlive
         if (Objects.nonNull(this.performKeepAliveFuture))
         {
             log.info(
-                "IMAP Keep-Alive future calceled (return {})",
+                "IMAP Keep-Alive future canceled (return {})",
                 this.performKeepAliveFuture.cancel(true)
             );
         }
