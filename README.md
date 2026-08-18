@@ -18,98 +18,96 @@
 ## 系统架构图
 
 ```txt
-┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                      External Middleware Service                                     │
-│                                                                                                      │
-│   ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐ │
-│   │   Gmail IMAP   │  │  DeepSeek API  │  │    RabbitMQ    │  │     Redis      │  │     MySQL      │ │
-│   │  (LKML 邮箱)   │  │ (分析 + 讨论)  │   │   (消息队列)   │  │   (RESP 协议)  │   │  (数据持久化)  │ │
-│   └───────┬────────┘  └───────▲────────┘  └───────▲────────┘  └───────▲────────┘  └───────▲────────┘ │
-└───────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┼──────────┘
-            │ IMAP              │ HTTPS / SSE       │ AMQP              │ RESP              │ JDBC
-            │                   │                   │                   │                   │
-┌───────────▼───────────────────▼───────────────────▼───────────────────▼───────────────────▼──────────┐
-│                    Linux Kernel Email List Analyzer (单体服务)                                        │
-│                                                                                                      │
-│   Tomcat + Virtual Threads                                                                           │
-│   执行器：email-service-executor / analyze-report-discuss-executor                                   │
-│                                                                                                      │
-│  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐  │
-│  │  bootstrap                                                                                     │  │
-│  │                                                                                                │  │
-│  │  LinuxKernalEmailListAnalyzerApplication  (启动入口)                                           │  │
-│  └────────────────────────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                                      │
-│  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐  │
-│  │  core 模块（公共基础设施）                                                                     │  │
-│  │                                                                                                │  │
-│  │  • SingleImapConnectionImpl + ImapConnectionKeepAlive  (IMAP 连接管理 / 保活)                  │  │
-│  │  • KernelEmailStatus 枚举  (0 ~ 12 状态机状态)                                                 │  │
-│  │  • TimeMonitorAspect  (AOP 耗时统计)                                                           │  │
-│  │  • GlobalIdConsumer  (全局 ID 生成)                                                            │  │
-│  │  • 实体 / DTO / Properties / Repository / Utils / Exception                                    │  │
-│  └────────────────────────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                                      │
-│  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐  │
-│  │  analyzer 模块（核心流水线）                                                                   │  │
-│  │                                                                                                │  │
-│  │  [定时调度] KernelEmailPusherImpl                                                              │  │
-│  │       │                                                                                        │  │
-│  │       │  1. IMAP 拉取未读邮件（批量 50，阅后即焚）                                              │  │
-│  │       │  2. 解析为 PlainTextEmail                                                              │  │
-│  │       │  3. 插入 linux_kernal_email 表（状态 = FETCHED）                                       │  │
-│  │       │  4. 推送 RabbitMQ（状态 → PUSHED / PUSH_FAILED）                                       │  │
-│  │       ▼                                                                                        │  │
-│  │  RabbitMQ Queue (lkml)                                                                         │  │
-│  │       │                                                                                        │  │
-│  │       └──► KernelEmailAnalyzerServiceImpl  (@RabbitListener)                                   │  │
-│  │                │                                                                               │  │
-│  │                │  状态机驱动 (KernelEmailStateMachineImpl + Spring StateMachine)               │  │
-│  │                │                                                                               │  │
-│  │                │  FETCHED → ANALYSIS_PENDING → ANALYZING → ANALYSIS_SUCCESS/FAILED             │  │
-│  │                │           → GENERATING → GENERATE_SUCCESS/FAILED                              │  │
-│  │                │           → REPORT_PERSISTING → REPORT_PERSISTENCE_SUCCESS/FAILED             │  │
-│  │                │                                                                               │  │
-│  │                ├─ KernelEmailDeepSeekAnalyzer          (调用 DeepSeek 分析)                    │  │
-│  │                ├─ AIModelAnswerAuditService            (审计响应)                              │  │
-│  │                ├─ LKMLAnalyzeTemplateGeneratorImpl     (Thymeleaf 生成 HTML 报告)              │  │
-│  │                └─ LKMLAnalyzeReportWriterImpl          (本地文件持久化)                        │  │
-│  │                                                                                                │  │
-│  │  KernelEmailClassifierImpl  (邮件分类辅助)                                                     │  │
-│  └────────────────────────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                                      │
-│  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐  │
-│  │  analyze_report_discuss 模块（交互讨论）                                                       │  │
-│  │                                                                                                │  │
-│  │  Controller → AnalyzeReportDiscussServiceImpl                                                  │  │
-│  │       │                                                                                        │  │
-│  │       │  1. DiscussSessionLockGuard                (会话串行锁，防并发)                        │  │
-│  │       │  2. 插入 ai_analyze_discuss_session_details                                            │  │
-│  │       │  3. KenelEmailAnalyzeReportRedisCacher     (从 Redis / DB 加载报告)                    │  │
-│  │       │  4. ModelPromptReader + DiscussAbstractCacher                                          │  │
-│  │       │         (系统 / 用户提示词 + 历史摘要)                                                 │  │
-│  │       │  5. OkHttp SSE 调用 DeepSeek（流式）                                                   │  │
-│  │       │  6. SSECallBack + ResponseChunkHandler                                                 │  │
-│  │       │         (异步推送前端 + 审计 + 摘要)                                                   │  │
-│  │       │                                                                                        │  │
-│  │  AnalyzeReportDiscussDeepSeekAbstractor  (上下文摘要)                                          │  │
-│  │  Session / Details Service               (会话管理)                                            │  │
-│  └────────────────────────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                                      │
-│  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐  │
-│  │  model_response_audit 模块（审计与计费）                                                       │  │
-│  │                                                                                                │  │
-│  │  AIModelAnswerAuditServiceImpl                                                                 │  │
-│  │       ├─ ai_model_answer_audit     (任务元数据)                                                │  │
-│  │       ├─ ai_model_answer_content   (推理 + 输出内容)                                           │  │
-│  │       └─ ai_model_answer_usage     (Token 明细)                                                │  │
-│  │                                                                                                │  │
-│  │  AIModelDailyBillingServiceImpl  (每日汇总，幂等结算)                                          │  │
-│  │       └─ ai_model_daily_billing    (按模型 + 日期聚合费用)                                     │  │
-│  │                                                                                                │  │
-│  │  Token 计算组件 + 转换器                                                                       │  │
-│  └────────────────────────────────────────────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                                External Middleware Service                                                   │
+│                                                                                                                              │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐      │
+│  │   Gmail IMAP   │  │  DeepSeek API  │  │    RabbitMQ    │  │     Redis      │  │     MySQL      │  │     MinIO      │      │
+│  │  (LKML 邮箱)   │  │  (分析 + 讨论)  │  │   (消息队列)   │  │  (RESP 协议)    │  │  (数据持久化)  │  │ (对象存储/S3)   │      │
+│  └───────┬────────┘  └───────▲────────┘  └───────▲────────┘  └───────▲────────┘  └───────▲────────┘  └───────▲────────┘      │
+└──────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┼───────────────────┼───────────────┘
+           │ IMAP              │ HTTPS / SSE       │ AMQP              │ RESP              │ TCP               │ HTTP
+           │                   │                   │                   │                   │                   │
+┌──────────▼───────────────────▼───────────────────▼───────────────────▼───────────────────▼───────────────────▼───────────────┐
+│                                        Linux Kernel Email List Analyzer (单体服务)                                           │
+│                                                                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │  bootstrap                                                                                                             │  │
+│  │                                                                                                                        │  │
+│  │  LinuxKernalEmailListAnalyzerApplication  (启动入口)                                                                   │  │
+│  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │  core 模块（公共基础设施）                                                                                              │  │
+│  │                                                                                                                        │  │
+│  │  • SingleImapConnectionImpl + ImapConnectionKeepAlive  (IMAP 连接管理 / 保活)                                           │  │
+│  │  • KernelEmailStatus 枚举  (0 ~ 12 状态机状态)                                                                          │  │
+│  │  • TimeMonitorAspect  (AOP 耗时统计)                                                                                   │  │
+│  │  • GlobalIdConsumer  (全局 ID 生成)                                                                                    │  │
+│  │  • MinioTemplate / MinioProperties / ObjectStorageService  (MinIO 客户端与上传下载封装)                                 │  │
+│  │  • 实体 / DTO / Properties / Repository / Utils / Exception                                                            │  │
+│  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │  analyzer 模块（核心流水线）                                                                                           │  │
+│  │                                                                                                                        │  │
+│  │  [定时调度] KernelEmailPusherImpl                                                                                      │  │
+│  │       │                                                                                                                │  │
+│  │       │  1. IMAP 拉取未读邮件（批量 50，阅后即焚）                                                                      │  │
+│  │       │  2. 解析为 PlainTextEmail                                                                                      │  │
+│  │       │  3. 插入 linux_kernal_email 表（状态 = FETCHED）                                                               │  │
+│  │       │  4. 推送 RabbitMQ（状态 → PUSHED / PUSH_FAILED）                                                               │  │
+│  │       ▼                                                                                                                │  │
+│  │  RabbitMQ Queue (lkml)                                                                                                 │  │
+│  │       │                                                                                                                │  │
+│  │       └──► KernelEmailAnalyzerServiceImpl  (@RabbitListener)                                                           │  │
+│  │                │                                                                                                       │  │
+│  │                │  状态机驱动 (KernelEmailStateMachineImpl + Spring StateMachine)                                       │  │
+│  │                │                                                                                                       │  │
+│  │                │  FETCHED → ANALYSIS_PENDING → ANALYZING → ANALYSIS_SUCCESS/FAILED                                     │  │
+│  │                │           → GENERATING → GENERATE_SUCCESS/FAILED                                                      │  │
+│  │                │           → REPORT_PERSISTING → REPORT_PERSISTENCE_SUCCESS/FAILED                                     │  │
+│  │                │                                                                                                       │  │
+│  │                ├─ KernelEmailDeepSeekAnalyzer          (调用 DeepSeek 分析)                                            │  │
+│  │                ├─ AIModelAnswerAuditService            (审计响应)                                                      │  │
+│  │                ├─ LKMLAnalyzeTemplateGeneratorImpl     (Thymeleaf 生成 HTML 报告)                                      │  │
+│  │                └─ LKMLAnalyzeReportWriter              (分析报告持久化 + 上传 MinIO)                                   │  │
+│  │                                                                                                                        │  │
+│  │  KernelEmailClassifierImpl  (邮件分类辅助)                                                                             │  │
+│  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │  analyze_report_discuss 模块（交互讨论）                                                                                │  │
+│  │                                                                                                                        │  │
+│  │  Controller → AnalyzeReportDiscussServiceImpl                                                                          │  │
+│  │       │                                                                                                                │  │
+│  │       │  1. DiscussSessionLockGuard                (会话串行锁，防并发)                                                 │  │
+│  │       │  2. 插入 ai_analyze_discuss_session_details                                                                    │  │
+│  │       │  3. KenelEmailAnalyzeReportRedisCacher     (从 Redis / DB 加载报告)                                            │  │
+│  │       │  4. ModelPromptReader + DiscussAbstractCacher                                                                  │  │
+│  │       │         (系统 / 用户提示词 + 历史摘要)                                                                          │  │
+│  │       │  5. OkHttp SSE 调用 DeepSeek（流式）                                                                           │  │
+│  │       │  6. SSECallBack + ResponseChunkHandler                                                                        │  │
+│  │       │         (异步推送前端 + 审计 + 摘要)                                                                            │  │
+│  │       │                                                                                                                │  │
+│  │  AnalyzeReportDiscussDeepSeekAbstractor  (上下文摘要)                                                                  │  │
+│  │  Session / Details Service               (会话管理)                                                                    │  │
+│  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │  model_response_audit 模块（审计与计费）                                                                                │  │
+│  │                                                                                                                        │  │
+│  │  AIModelAnswerAuditServiceImpl                                                                                         │  │
+│  │       ├─ ai_model_answer_audit     (任务元数据)                                                                         │  │
+│  │       ├─ ai_model_answer_content   (推理 + 输出内容)                                                                    │  │
+│  │       └─ ai_model_answer_usage     (Token 明细)                                                                        │  │
+│  │                                                                                                                        │  │
+│  │  AIModelDailyBillingServiceImpl  (每日汇总，幂等结算)                                                                   │  │
+│  │       └─ ai_model_daily_billing  (按模型 + 日期聚合费用)                                                                │  │
+│  │                                                                                                                        │  │
+│  │  Token 计算组件 + 转换器                                                                                                │  │
+│  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## 模块设计
@@ -199,4 +197,4 @@ linux_kernel_email_list_analyzer (父 POM)
 
 [Apache License Version 2.0](https://github.com/JesseZ332623/Linux-Kernal-Email-List-Analyzer/blob/main/LICENSE)
 
-## 2026.08.15
+## 2026.08.18
