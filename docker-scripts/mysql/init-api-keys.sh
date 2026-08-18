@@ -5,7 +5,7 @@ set -e
 
 # 等待 MySQL 就绪
 until mysqladmin ping -h localhost -uroot -p"${MYSQL_ROOT_PASSWORD}" --silent; do
-    echo "Wating for MySQL start..."
+    echo "Waiting for MySQL start..."
     sleep 2
 done
 
