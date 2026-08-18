@@ -3,8 +3,8 @@ package com.jesse.analyze_report_discuss.components.sse_callback;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jesse.analyze_report_discuss.components.discuss_abstract.AnalyzeReportDiscussAbstractor;
-import com.jesse.analyze_report_discuss.components.discuss_session_lock.DiscussSessionLockGurard;
-import com.jesse.analyze_report_discuss.request.DiscussAbstractReqest;
+import com.jesse.analyze_report_discuss.components.discuss_session_lock.DiscussSessionLockGuard;
+import com.jesse.analyze_report_discuss.request.DiscussAbstractRequest;
 import com.jesse.analyze_report_discuss.request.ReportDiscussRequest;
 import com.jesse.analyze_report_discuss.service.AnalyzeReportDiscussSessionDetailsService;
 import com.jesse.core.pojo.ai.AIModelAnswerChoice;
@@ -78,7 +78,7 @@ public class SSECallBack implements Callback
 
     /** 讨论会话锁管理器接口。*/
     private final
-    DiscussSessionLockGurard discussSessionLockGurard;
+    DiscussSessionLockGuard discussSessionLockGuard;
 
     /** 每次发起 Stream 模式调用的时候，构造本回调的实例。*/
     public static SSECallBack create(
@@ -90,7 +90,7 @@ public class SSECallBack implements Callback
         final AIModelAnswerAuditService                 aiModelAnswerAuditService,
         final AnalyzeReportDiscussAbstractor            analyzeReportDiscussAbstractor,
         final ExecutorService                           executorService,
-        final DiscussSessionLockGurard                  discussSessionLockGurard
+        final DiscussSessionLockGuard                  discussSessionLockGuard
     )
     {
         final ResponseChunkHandler responseChunkHandler
@@ -107,7 +107,7 @@ public class SSECallBack implements Callback
             analyzeReportDiscussAbstractor,
             responseChunkHandler,
             executorService,
-            discussSessionLockGurard
+            discussSessionLockGuard
         );
     }
 
@@ -131,7 +131,7 @@ public class SSECallBack implements Callback
 
     /** 聚合完整的 SSE 响应体数据片，用于本次调用的审计信息持久化。*/
     private Optional<AIModelAnswerResponse>
-    agregateResponseChunks(List<AIModelAnswerSSEResponse> chunks)
+    aggregateResponseChunks(List<AIModelAnswerSSEResponse> chunks)
     {
         if (CollectionUtils.isEmpty(chunks))
         {
@@ -218,20 +218,20 @@ public class SSECallBack implements Callback
 
     /** 本次对话完成后需要在后台执行的审计与上下文摘要任务。*/
     private void
-    auditAndAbstract(AIModelAnswerResponse agregatedResponse)
+    auditAndAbstract(AIModelAnswerResponse aggregatedResponse)
     {
         // (1) 审计大模型调用信息
         final CompletableFuture<String> saveAudit
             = CompletableFuture.supplyAsync(
                 () -> {
-                    this.aiModelAnswerAuditService.save(agregatedResponse);
+                    this.aiModelAnswerAuditService.save(aggregatedResponse);
                     return "OK";
                 },
                 this.analyzeReportDiscussExecutor
             ).exceptionally((exception) -> {
                 log.error(
                     "Model response audit failed. (response id = {})",
-                    agregatedResponse.getId(), exception
+                    aggregatedResponse.getId(), exception
                 );
 
                 return exception.getMessage();
@@ -245,7 +245,7 @@ public class SSECallBack implements Callback
                         .updateModelResponseIdBySessionId(
                             this.sessionDetailId,
                             this.discussRequest.getSessionId(),
-                            agregatedResponse.getId()
+                            aggregatedResponse.getId()
                         );
 
                     return "OK";
@@ -253,11 +253,11 @@ public class SSECallBack implements Callback
                 this.analyzeReportDiscussExecutor
             ).exceptionally((exception) -> {
                 log.error(
-                    "Associate aconversation failed " +
+                    "Associate a conversation failed " +
                     "(session id = {}, conversation id = {}, response id = {})",
                     this.discussRequest.getSessionId(),
                     this.sessionDetailId,
-                    agregatedResponse.getId(),
+                    aggregatedResponse.getId(),
                     exception
                 );
 
@@ -270,11 +270,11 @@ public class SSECallBack implements Callback
             = (!this.responseChunkHandler.isEmitterInterrupted())
                 ? CompletableFuture.supplyAsync(
                     () -> {
-                        final DiscussAbstractReqest abstractRequest
-                            = new DiscussAbstractReqest(
+                        final DiscussAbstractRequest abstractRequest
+                            = new DiscussAbstractRequest(
                                 this.discussRequest.getTaskId(),
                                 this.discussRequest.getSessionId(),
-                                agregatedResponse,
+                                aggregatedResponse,
                                 this.discussRequest.getQuestion()
                             );
 
@@ -284,11 +284,11 @@ public class SSECallBack implements Callback
                     }, this.analyzeReportDiscussExecutor
                 ).exceptionally((exception) -> {
                     log.error(
-                        "Generate disscuss abstract failed. " +
+                        "Generate discuss abstract failed. " +
                         "(task id = {}, session id = {}, response id = {})",
                         this.discussRequest.getTaskId(),
                         this.discussRequest.getSessionId(),
-                        agregatedResponse.getId(),
+                        aggregatedResponse.getId(),
                         exception
                     );
 
@@ -324,7 +324,7 @@ public class SSECallBack implements Callback
 
             log.debug(
                 "Background task complete. (response id: {}, {})",
-                agregatedResponse.getId(), executeResultInfo
+                aggregatedResponse.getId(), executeResultInfo
             );
         }
         catch (TimeoutException timeout) {
@@ -358,7 +358,7 @@ public class SSECallBack implements Callback
         finally
         {
             // 失败了也不要忘记释放锁
-            this.discussSessionLockGurard
+            this.discussSessionLockGuard
                 .release(this.discussRequest.getSessionId());
         }
 
@@ -444,13 +444,13 @@ public class SSECallBack implements Callback
             }
 
             // 收集完所有的响应数据片后，再统一作审计信息持久化。
-            this.agregateResponseChunks(chunks)
+            this.aggregateResponseChunks(chunks)
                 .ifPresent(this::auditAndAbstract);
         }
         finally
         {
             // 最后释放锁，表示本会话可以开始下一轮讨论了
-            this.discussSessionLockGurard
+            this.discussSessionLockGuard
                 .release(this.discussRequest.getSessionId());
         }
     }
