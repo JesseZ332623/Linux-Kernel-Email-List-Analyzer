@@ -15,6 +15,22 @@ spring:
         max-concurrency: 75  # 最大并发消费者数量
         prefetch: 1          # 每个消费者一次只取 1 条消息
 
+    # 生产端消息确认方式
+    # Spring AMQP 协议有三个档位
+    # 1. none channel 不进入 confirm 模式，
+    #         broker 不会为你的消息发回任何 ack/nack
+    #
+    # 2. correlated 每条消息挂一个 CorrelationData，
+    #               broker 异步回 ack/nack，结果写入该对象
+    #
+    # 3. simple 老的同步等待模式，性能差，已不推荐
+    #
+    # 现代开发中一般选择 correlated 档位，
+    # 这样就可以在配置中注册 confirm callback，异步的执行生产端消息确认回调
+    # 或者调用 CorrelationData::getFuture() 方法同步的等待确认
+    # 本项目选用后者，因为涉及到业务状态流转，通用的回调无法覆盖所有场景
+    publisher-confirm-type: correlated
+
 app:
   rabbitmq-queue-props:
     lkml:
@@ -31,6 +47,9 @@ app:
       dlx-queue-name: lkml.dlx.queue
       # 内核邮件死信路由键
       dlx-routing-key: lkml.dlx.key
+
+      # 客户端等待 broker 确认收到消息的超时时间
+      publisher-confirm-timeout: 3s
 
   # 每次往消息队列推送的内核补丁邮件数量（-1 表示全量推送）
   lkml-push-limit: 1000
