@@ -32,9 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -351,53 +349,90 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
     }
 
     /**
-     * <h3>2026.08.18 新增</h3>
+     * <h3>2026.08.19 修订</h3>
      *
-     * 生产者调用 convertAndSend() 返回后，
-     * 消息只是发送到了本地 socket 缓冲，不代表 broker 实例真的收到了消息，
-     * 所以需要为每一封邮件消息注册一个确认回调，确保 broker 收到消息后再流转邮件的状态。
+     * 同步的等待单条消息的生产端确认（Publisher Confirm）。
      *
-     * @param emailId           内核补丁邮件雪花 ID，作为状态流转的依据
-     * @param correlationData   投递关联凭据，向它注册确认回调
+     * <p>
+     * {@code convertAndSend()} 返回只代表消息帧被写入了本地内核 socket 缓冲区，
+     * 并不代表 broker 真的收到并接受了这条消息。因此必须等到 broker 回送
+     * {@code basic.ack} / {@code basic.nack} 之后，才能决定状态如何流转。
+     * </p>
+     *
+     * <p>
+     * 这里刻意采用<b>同步等待</b>而非异步回调：状态流转必须留在
+     * {@code convertAndSend()} 所在的这条执行链上，才能保证 {@code PUSH_SUCCESS}
+     * 在绝大多数情况下先于消费端的 {@code PULL_SUCCESS} 完成。
+     * 本方法运行在虚拟线程上，阻塞会自动卸载载体线程，代价可控。
+     * </p>
+     *
+     * @param emailId         内核补丁邮件雪花 ID，作为状态流转的依据
+     * @param correlationData 投递关联凭据，从中取出确认结果
+     *
+     * @return broker 确认接受了这条消息则返回 true，否则返回 false
+     *
+     * @throws InterruptedException 等待确认的过程中当前线程被中断
      */
-    private void messagePublisherConfirm(
-        final Long emailId,
+    private boolean awaitPublisherConfirm(
+        final Long            emailId,
         final CorrelationData correlationData
-    )
+    ) throws InterruptedException
     {
-        final long confirmTimeout
-            = this.properties.getPublisherConfirmTimeout().toSeconds();
+        final long timeoutMillis
+            = this.properties.getPublisherConfirmTimeout().toMillis();
 
-        correlationData.getFuture()
-            .orTimeout(confirmTimeout, TimeUnit.SECONDS) // 等待 broker 收到消息并返回确认
-            .whenCompleteAsync(
-                (confirm, throwable) -> {
-                    if (Objects.isNull(throwable) && Objects.nonNull(confirm) && confirm.isAck())
-                    {
-                        this.kernelEmailStateMachine
-                            .fireEvent(emailId, KernelEmailEvents.PUSH_SUCCESS);
+        try
+        {
+            // (1) 阻塞等待 broker 的 ack / nack
+            final CorrelationData.Confirm confirm
+                = correlationData.getFuture()
+                    .get(timeoutMillis, TimeUnit.MILLISECONDS);
 
-                        log.info(
-                            "Pushed kernel email (snowflake-id = {}, message-id = {}) complete.",
-                            emailId, correlationData.getId()
-                        );
-                    }
-                    else
-                    {
-                        // 如果在等待 broker 确认的过程中，出现中断、超时、或者其他异常
-                        // 则流转状态至 PUSH_FAILED
-                        log.error(
-                            "Publisher confirm email (snowflake-id = {}, message-id = {}) failed. Caused by: {}",
-                            emailId, correlationData.getId(),
-                            Objects.nonNull(throwable)
-                                ? throwable.getMessage()
-                                : Objects.nonNull(confirm) ? confirm.getReason() : "unknow"
-                        );
+            // (2) 正常情况下 confirm 不会为 null，这里做防御性判断，
+            //     避免 NPE 逃出本方法冲垮整批推送。
+            if (Objects.isNull(confirm) || !confirm.isAck())
+            {
+                log.error(
+                    "Broker rejected kernel email (snowflake-id = {}, message-id = {}). Caused by: {}",
+                    emailId, correlationData.getId(),
+                    Objects.nonNull(confirm) ? confirm.getReason() : "confirm is null"
+                );
 
-                        this.kernelEmailStateMachine
-                            .fireEvent(emailId, KernelEmailEvents.PUSH_FAILURE);
-                    }
-                }, this.emailServiceExecutor);
+                return false;
+            }
+
+            log.info(
+                "Confirmed kernel email (snowflake-id = {}, message-id = {}) by broker.",
+                emailId, correlationData.getId()
+            );
+
+            return true;
+        }
+        catch (TimeoutException exception)
+        {
+            /*
+             * 注意：超时的真实语义是「结果未知」而非「确认失败」，
+             * 消息可能已经进入队列、甚至已被消费。
+             * 此处暂按失败处理以保证不会误报成功，
+             * 后续应引入 PUSH_UNKNOWN 状态 + 对账补偿来精确表达。
+             */
+            log.error(
+                "Publisher confirm timeout after {} ms, " +
+                "result UNKNOWN for kernel email (snowflake-id = {}, message-id = {}).",
+                timeoutMillis, emailId, correlationData.getId()
+            );
+
+            return false;
+        }
+        catch (ExecutionException exception)
+        {
+            log.error(
+                "Publisher confirm failed for kernel email (snowflake-id = {}, message-id = {}).",
+                emailId, correlationData.getId(), exception.getCause()
+            );
+
+            return false;
+        }
     }
 
     /** 将一份内核补丁邮件推送至 RabbitMQ。*/
@@ -408,6 +443,8 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
         {
             for (var kernelEmail : kernelEmailMap.entrySet())
             {
+                final Long emailId = kernelEmail.getKey();
+
                 try
                 {
                     // (1) 使用邮件的 RFC Message-ID 构造关联凭据 ID
@@ -422,17 +459,47 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
                         correlationData
                     );
 
-                    // (3) 注册确认回调（手动的 publisher-confirm callback）异步流转状态
-                    this.messagePublisherConfirm(kernelEmail.getKey(), correlationData);
+                    // (3) 同步等待 broker 确认
+                    final boolean acked
+                        = this.awaitPublisherConfirm(emailId, correlationData);
+
+                    // (4) 拿到结果后再流转状态
+                    this.kernelEmailStateMachine.fireEvent(
+                            emailId,
+                            (acked)
+                                ? KernelEmailEvents.PUSH_SUCCESS
+                                : KernelEmailEvents.PUSH_FAILURE
+                        );
+
+                    // (5) 这封邮件投出去如果没有被 broker 确认，
+                    // 则返回 null 供下游统计
+                    if (!acked) { return null; }
+                }
+                catch (InterruptedException interrupted)
+                {
+                    // 中断意味着应用正在关闭
+                    // 必须恢复中断标志位并立刻停止处理本批剩余的邮件。
+                    Thread.currentThread().interrupt();
+
+                    log.warn(
+                        "Interrupted while waiting publisher confirm " +
+                        "for kernel email (snowflake-id = {}), abort this batch.",
+                        emailId
+                    );
+
+                    this.kernelEmailStateMachine
+                        .fireEvent(emailId, KernelEmailEvents.PUSH_FAILURE);
+
+                    return null;
                 }
                 catch (AmqpException exception)
                 {
                     // 如果这封邮件投递失败
                     //（仅包括 消息序列化失败、连接不可用、Channel 创建失败等同步错误）
                     this.kernelEmailStateMachine
-                        .fireEvent(kernelEmail.getKey(), KernelEmailEvents.PUSH_FAILURE);
+                        .fireEvent(emailId, KernelEmailEvents.PUSH_FAILURE);
 
-                    log.error("Kernel email join queue failed", exception);
+                    log.error("Kernel email join queue failed.", exception);
 
                     return null;
                 }
@@ -487,7 +554,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
                         .filter(Objects::nonNull)
                         .count();
 
-                log.info("Sent kernel emails complete ({} / {}).", successCount, batch.size());
+                log.info("Pushed kernel emails complete ({} / {}).", successCount, batch.size());
             }
         }
         finally
