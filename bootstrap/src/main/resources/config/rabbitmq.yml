@@ -49,7 +49,7 @@ app:
       dlx-routing-key: lkml.dlx.key
 
       # 客户端等待 broker 确认收到消息的超时时间
-      publisher-confirm-timeout: 3s
+      publisher-confirm-timeout: 10s
 
   # 每次往消息队列推送的内核补丁邮件数量（-1 表示全量推送）
   lkml-push-limit: 1000
