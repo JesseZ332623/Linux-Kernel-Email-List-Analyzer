@@ -2,7 +2,6 @@ package com.jesse.core.config;
 
 import com.jesse.core.properties.LKMLRabbitMQProperties;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -12,10 +11,7 @@ import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Objects;
-
 /** RabbitMQ 配置类。*/
-@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class RabbitMQConfig
@@ -51,27 +47,6 @@ public class RabbitMQConfig
             = new RabbitTemplate(connectionFactory);
 
         rabbitTemplate.setMessageConverter(this.messageConverter());
-
-        rabbitTemplate.setConfirmCallback(
-            (correlationData, ack, cause) -> {
-                if (ack)
-                {
-                    if (Objects.nonNull(correlationData)) {
-                        log.info("Message arrived Exchange: {}", correlationData.getId());
-                    }
-                }
-                else
-                {
-                    if (Objects.nonNull(correlationData))
-                    {
-                        log.error(
-                            "Message send failed: {}, Caused by: {}",
-                            correlationData.getId(), cause
-                        );
-                    }
-                }
-            }
-        );
 
         return rabbitTemplate;
     }
