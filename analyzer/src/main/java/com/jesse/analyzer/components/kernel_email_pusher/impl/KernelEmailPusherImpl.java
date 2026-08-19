@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -349,6 +350,56 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
         return Map.of(nextId, kernelEmail);
     }
 
+    /**
+     * <h3>2026.08.18 新增</h3>
+     *
+     * 生产者调用 convertAndSend() 返回后，
+     * 消息只是发送到了本地 socket 缓冲，不代表 broker 实例真的收到了消息，
+     * 所以需要为每一封邮件消息注册一个确认回调，确保 broker 收到消息后再流转邮件的状态。
+     *
+     * @param emailId           内核补丁邮件雪花 ID，作为状态流转的依据
+     * @param correlationData   投递关联凭据，向它注册确认回调
+     */
+    private void messagePublisherConfirm(
+        final Long emailId,
+        final CorrelationData correlationData
+    )
+    {
+        final long confirmTimeout
+            = this.properties.getPublisherConfirmTimeout().toSeconds();
+
+        correlationData.getFuture()
+            .orTimeout(confirmTimeout, TimeUnit.SECONDS) // 等待 broker 收到消息并返回确认
+            .whenCompleteAsync(
+                (confirm, throwable) -> {
+                    if (Objects.isNull(throwable) && Objects.nonNull(confirm) && confirm.isAck())
+                    {
+                        this.kernelEmailStateMachine
+                            .fireEvent(emailId, KernelEmailEvents.PUSH_SUCCESS);
+
+                        log.info(
+                            "Pushed kernel email (snowflake-id = {}, message-id = {}) complete.",
+                            emailId, correlationData.getId()
+                        );
+                    }
+                    else
+                    {
+                        // 如果在等待 broker 确认的过程中，出现中断、超时、或者其他异常
+                        // 则流转状态至 PUSH_FAILED
+                        log.error(
+                            "Publisher confirm email (snowflake-id = {}, message-id = {}) failed. Caused by: {}",
+                            emailId, correlationData.getId(),
+                            Objects.nonNull(throwable)
+                                ? throwable.getMessage()
+                                : Objects.nonNull(confirm) ? confirm.getReason() : "unknow"
+                        );
+
+                        this.kernelEmailStateMachine
+                            .fireEvent(emailId, KernelEmailEvents.PUSH_FAILURE);
+                    }
+                }, this.emailServiceExecutor);
+    }
+
     /** 将一份内核补丁邮件推送至 RabbitMQ。*/
     private Map<Long, PlainTextEmail>
     pushToRabbitMQ(Map<Long, PlainTextEmail> kernelEmailMap)
@@ -359,26 +410,25 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
             {
                 try
                 {
-                    // (1) 把邮件投递到 RabbitMQ
+                    // (1) 使用邮件的 RFC Message-ID 构造关联凭据 ID
+                    final CorrelationData correlationData
+                        = new CorrelationData(kernelEmail.getValue().getMessageId());
+
+                    // (2) 把邮件投递到 RabbitMQ（写入客户端 socket 缓冲区）
                     this.rabbitTemplate.convertAndSend(
                         this.properties.getExchangeName(),
                         this.properties.getRoutingKey(),
                         kernelEmail,
-                        new CorrelationData(kernelEmail.getValue().getMessageId())
+                        correlationData
                     );
 
-                    // (2) 投递成功则变更状态到 PUSHED
-                    this.kernelEmailStateMachine
-                        .fireEvent(kernelEmail.getKey(), KernelEmailEvents.PUSH_SUCCESS);
-
-                    log.info(
-                        "Pushed kernel email (message-id = {}) complete.",
-                        kernelEmail.getValue().getMessageId()
-                    );
+                    // (3) 注册确认回调（手动的 publisher-confirm callback）异步流转状态
+                    this.messagePublisherConfirm(kernelEmail.getKey(), correlationData);
                 }
                 catch (AmqpException exception)
                 {
-                    // 如果这封邮件投递失败，则变更状态到 PUSH_FAILED
+                    // 如果这封邮件投递失败
+                    //（仅包括 消息序列化失败、连接不可用、Channel 创建失败等同步错误）
                     this.kernelEmailStateMachine
                         .fireEvent(kernelEmail.getKey(), KernelEmailEvents.PUSH_FAILURE);
 
@@ -430,14 +480,14 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
                                    .thenApply(this::pushToRabbitMQ)
                            ).toList();
 
-                // (5) 等待完成并统计这一个批次的成功数量
+                // (5) 等待完成并统计这一个批次的成功发送的数量
                 final long successCount
                     = pushFutures.stream()
                         .map(CompletableFuture::join)
                         .filter(Objects::nonNull)
                         .count();
 
-                log.info("Pushed kernel emails complete ({} / {}).", successCount, batch.size());
+                log.info("Sent kernel emails complete ({} / {}).", successCount, batch.size());
             }
         }
         finally
