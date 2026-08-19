@@ -6,6 +6,8 @@ import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+
 /** RabbitMQ 队列交换机配置属性类。*/
 @Data
 @ToString
@@ -31,4 +33,7 @@ public class LKMLRabbitMQProperties
 
     /** 内核邮件死信路由键 */
     private String dlxRoutingKey;
+
+    /** 客户端等待 broker 确认收到消息的超时时间 */
+    private Duration publisherConfirmTimeout;
 }
