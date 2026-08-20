@@ -9,11 +9,13 @@ import com.jesse.core.pojo.AnalyzeResultTemplateData;
 import com.jesse.core.response.AIModelAnswerResponse;
 import com.jesse.analyzer.service.KernelEmailAnalyzerService;
 import com.jesse.core.pojo.PlainTextEmail;
+import com.jesse.core.utils.AmqpMessagePropertiesUtils;
 import com.jesse.response_audit.service.AIModelAnswerAuditService;
 import com.rabbitmq.client.Channel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +44,10 @@ public class KernelEmailAnalyzerServiceImpl implements KernelEmailAnalyzerServic
 
     /** AI 模型 LKML 分析任务响应审计表服务类接口。*/
     private final AIModelAnswerAuditService aiModelAnswerAuditService;
+
+    /** MessageProperties 必要字段 JSON 序列化工具类。*/
+    private final
+    AmqpMessagePropertiesUtils amqpMessagePropertiesUtils;
 
     /** 从队列中消费一封邮件消息并处理。*/
     @Override
@@ -89,13 +95,22 @@ public class KernelEmailAnalyzerServiceImpl implements KernelEmailAnalyzerServic
         }
         catch (Exception exception)
         {
-            log.error("", exception);
+            final MessageProperties messageProperties
+                = message.getMessageProperties();
+
+            final String messageMetaData
+                = this.amqpMessagePropertiesUtils.toJson(messageProperties);
 
             try
             {
-                // 目前的做法略显粗暴，在分析过程中出现了任何错误，
-                // 这封邮件都入死信队列。
-                log.warn("Delivery message {} to dead letter queue.", deliveryTag);
+                // 2026.08.20 增补，更详细的日志，在 NACK 进 DLQ 之前，
+                // 我们应该输出详细的消息元数据方便后续排查
+                log.error(
+                    "Handle kernel email failed, will deliver to DLQ. " +
+                    "(message-metadata: {})",
+                    messageMetaData, exception
+                );
+
                 channel.basicNack(deliveryTag, false, false);
             }
             catch (IOException ioException)
@@ -103,8 +118,9 @@ public class KernelEmailAnalyzerServiceImpl implements KernelEmailAnalyzerServic
                 // 如果不确认调用失败了（比如和队列服务的连接断开），
                 // 消息会自己回到队列，不会丢失。
                 log.error(
-                    "Nack kernel email message failed (delivery tag: {})",
-                    deliveryTag, ioException
+                    "Nack kernel email message failed, return to queue. " +
+                    "(message-metadata: {})",
+                    messageMetaData, ioException
                 );
             }
         }
