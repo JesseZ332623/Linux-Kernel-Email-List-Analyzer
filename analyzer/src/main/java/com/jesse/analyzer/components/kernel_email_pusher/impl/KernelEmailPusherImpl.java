@@ -462,6 +462,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
 
                             messageProperties.setMessageId(messageId);
                             messageProperties.setHeader("email-snowflake-id", emailId);
+                            messageProperties.setHeader("content-length", message.getBody().length);
 
                             return message;
                     };
