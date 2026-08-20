@@ -77,7 +77,6 @@ final public class AmqpMessagePropertiesUtils
         private Integer priority;
         private String expiration;
         private String timestamp;
-        private Long contentLength;
 
         // 用户信息
         private String userId;
@@ -127,8 +126,6 @@ final public class AmqpMessagePropertiesUtils
             if (Objects.nonNull(props.getTimestamp())) {
                 info.setTimestamp(props.getTimestamp().toString());
             }
-
-            info.setContentLength(props.getContentLength());
 
             // 用户信息
             info.setUserId(props.getUserId());
