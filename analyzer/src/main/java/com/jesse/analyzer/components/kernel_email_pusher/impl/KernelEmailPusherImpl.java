@@ -17,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.angus.mail.imap.IMAPFolder;
 import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.core.MessagePostProcessor;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -443,27 +445,42 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
         {
             for (var kernelEmail : kernelEmailMap.entrySet())
             {
-                final Long emailId = kernelEmail.getKey();
+                final Long emailId     = kernelEmail.getKey();
+                final String messageId = kernelEmail.getValue().getMessageId();
 
                 try
                 {
                     // (1) 使用邮件的 RFC Message-ID 构造关联凭据 ID
                     final CorrelationData correlationData
-                        = new CorrelationData(kernelEmail.getValue().getMessageId());
+                        = new CorrelationData(messageId);
 
-                    // (2) 把邮件投递到 RabbitMQ（写入客户端 socket 缓冲区）
+                    // (2) 声明 “往消息元数据中写入邮件的 Message-ID 和 雪花 ID” 的回调函数
+                    final MessagePostProcessor messagePostProcessor
+                        = (message) -> {
+                            final MessageProperties messageProperties
+                                = message.getMessageProperties();
+
+                            messageProperties.setMessageId(messageId);
+                            messageProperties.setHeader("email-snowflake-id", emailId);
+                            messageProperties.setHeader("content-length", message.getBody().length);
+
+                            return message;
+                    };
+
+                    // (3) 把邮件投递到 RabbitMQ（写入客户端 socket 缓冲区）
                     this.rabbitTemplate.convertAndSend(
                         this.properties.getExchangeName(),
                         this.properties.getRoutingKey(),
                         kernelEmail,
+                        messagePostProcessor,
                         correlationData
                     );
 
-                    // (3) 同步等待 broker 确认
+                    // (4) 同步等待 broker 确认
                     final boolean acked
                         = this.awaitPublisherConfirm(emailId, correlationData);
 
-                    // (4) 拿到结果后再流转状态
+                    // (5) 拿到结果后再流转状态
                     this.kernelEmailStateMachine.fireEvent(
                             emailId,
                             (acked)
@@ -471,7 +488,7 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
                                 : KernelEmailEvents.PUSH_FAILURE
                         );
 
-                    // (5) 这封邮件投出去如果没有被 broker 确认，
+                    // 若这封邮件投出去如果没有被 broker 确认，
                     // 则返回 null 供下游统计
                     if (!acked) { return null; }
                 }
