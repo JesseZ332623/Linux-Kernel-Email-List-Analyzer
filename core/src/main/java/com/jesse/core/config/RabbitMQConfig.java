@@ -1,7 +1,9 @@
 package com.jesse.core.config;
 
+import com.jesse.core.components.rabbitmq_callback.CompositeReturnsCallback;
 import com.jesse.core.properties.LKMLRabbitMQProperties;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -12,12 +14,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /** RabbitMQ 配置类。*/
+@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class RabbitMQConfig
 {
     /** RabbitMQ 队列交换机配置属性类。*/
     private final LKMLRabbitMQProperties properties;
+
+    /** 全局消息回退处理器分发器。*/
+    private final
+    CompositeReturnsCallback compositeReturnsCallback;
 
     /** Jackson 消息转换器（队列中的消息按 JSON 存储）。*/
     @Bean
@@ -47,6 +54,9 @@ public class RabbitMQConfig
             = new RabbitTemplate(connectionFactory);
 
         rabbitTemplate.setMessageConverter(this.messageConverter());
+
+        /* 2026.08.21 新增，注入一个全局的消息回退处理回调。*/
+        rabbitTemplate.setReturnsCallback(this.compositeReturnsCallback);
 
         return rabbitTemplate;
     }
