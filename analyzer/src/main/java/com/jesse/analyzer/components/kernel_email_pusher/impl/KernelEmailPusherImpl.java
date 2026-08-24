@@ -3,6 +3,7 @@ package com.jesse.analyzer.components.kernel_email_pusher.impl;
 import com.jesse.analyzer.components.kernel_email_pusher.KernelEmailPusher;
 import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
+import com.jesse.core.components.rabbitmq_callback.ReturnedMessageHandler;
 import com.jesse.core.entity.LinuxKernelEmailEntity;
 import com.jesse.analyzer.repository.LinuxKernelEmailRepository;
 import com.jesse.core.components.global_id.GlobalIdConsumer;
@@ -403,6 +404,17 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
                 return false;
             }
 
+            // 如果消息被回退，说明路由键没有匹配到任何队列
+            if (Objects.nonNull(correlationData.getReturned()))
+            {
+                log.error(
+                    "Kernel email (snowflake-id = {}) was ACKed but UNROUTABLE, treat as push failure.",
+                    emailId
+                );
+
+                return false;
+            }
+
             log.info(
                 "Confirmed kernel email (snowflake-id = {}, message-id = {}) by broker.",
                 emailId, correlationData.getId()
@@ -461,8 +473,14 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
                                 = message.getMessageProperties();
 
                             messageProperties.setMessageId(messageId);
+
+                            messageProperties.setHeader(
+                                ReturnedMessageHandler.BUSINESS_DOMAIN_KEY,
+                                KernelEmailReturnedMessageHandler.BUSINESS_DOMAIN
+                            );
+
                             messageProperties.setHeader("email-snowflake-id", emailId);
-                            messageProperties.setHeader("content-length", message.getBody().length);
+                            messageProperties.setHeader("email-content-length", message.getBody().length);
 
                             return message;
                     };
