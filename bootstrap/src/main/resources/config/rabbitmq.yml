@@ -31,6 +31,15 @@ spring:
     # 本项目选用后者，因为涉及到业务状态流转，通用的回调无法覆盖所有场景
     publisher-confirm-type: correlated
 
+    # 开启消息回退机制
+    # publisher-confirm 只能保证消息到达了交换机，
+    # 但如果路由键匹配不到任何队列，开启后 Broker 会将消息返回给生产者
+    publisher-returns: true
+
+    # 消息必须被路由到至少一个队列，否则通过 ReturnsCallback 退还消息
+    template:
+      mandatory: true
+
 app:
   rabbitmq-queue-props:
     lkml:
