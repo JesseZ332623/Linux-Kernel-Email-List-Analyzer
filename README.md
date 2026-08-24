@@ -1,4 +1,4 @@
-# Linux 内核邮件补丁分析、归档、讨论服务
+# Linux 内核补丁邮件分析、归档、讨论服务
 
 <div>
     <img
@@ -8,12 +8,69 @@
         style="margin-right: 4px"
     >
     <a href="https://skillicons.dev">
-        <img src="https://skillicons.dev/icons?i=java,spring,linux,gmail,mysql,redis,rabbitmq,aws,docker" alt="技术选型">
+        <img src="https://skillicons.dev/icons?i=java,spring,linux,gmail,mysql,redis,rabbitmq,aws,docker,git" alt="技术选型">
     </a>
 </div>
 
 从邮箱服务中拉取 Linux 内核补丁邮件，交给 AI 去分析后归档，
 回归传统的多模块单体阻塞式架构 (Tomcat + V-Thread)。
+
+## 快速启动
+
+### 前置要求
+
+- [JDK 25](https://www.oracle.com/java/technologies/downloads/#java25)
+
+- [Maven 3.8+](https://maven.apache.org/download.cgi)
+
+- Docker
+  - **Windows / MacOS** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  - **Linux Ubuntu/Debian** 安装 Docker Engine 和 Compose 插件
+
+    ```shell
+    # docker-ce Docker 守护进程
+    # docker-ce-cli    docker 命令行工具
+    # containerd.io    底层容器运行时
+    sudo apt-get install docker-ce docker-ce-cli containerd.io
+    
+    # 按照 docker compose 插件，后面可以使用 docker compose 命令快速启动
+    sudo apt-get install docker-compose-plugin
+    ```
+
+### 部署步骤
+
+```shell
+git clone https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer
+
+cd ./Linux-Kernel-Email-List-Analyzer
+
+# 构建项目
+mvn clean package -P dev
+
+# 构建并启动容器
+docker compose -p lkml_analyzer build
+docker compose -p lkml_analyzer up -d
+```
+
+### 验证
+
+```shell
+# 查看各容器状态
+docker compose -p lkml_analyzer ps
+
+# 查看各容器运行时日志
+docker compose -p lkml_analyzer logs -f
+```
+
+### 停止
+
+```shell
+docker compose -p lkml_analyzer stop
+```
+
+### 访问
+
+服务启动后访问 `http://localhost:26543/endpoint-document.html` 浏览服务端点。
 
 ## 系统架构图
 
