@@ -6,6 +6,7 @@ import org.springframework.amqp.core.ReturnedMessage;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,14 @@ public class CompositeReturnsCallback implements RabbitTemplate.ReturnsCallback
                     .collect(
                         Collectors.toMap(
                             ReturnedMessageHandler::businessDomain,
-                            Function.identity()
+                            Function.identity(),
+                            (a, b) -> {
+                                throw new
+                                IllegalStateException(
+                                    "Duplicate business domain '%s' declared by %s and %s."
+                                        .formatted(a.businessDomain(), a.getClass().getName(), b.getClass().getName())
+                                );
+                            }
                         )
                     );
     }
@@ -52,10 +60,25 @@ public class CompositeReturnsCallback implements RabbitTemplate.ReturnsCallback
             = returned.getMessage().getMessageProperties();
 
         // (1) 查询回退消息的业务域
-        final String domain
-            = messageProperties.getHeader("business-domain");
+        final Object domainHeader
+            = messageProperties.getHeader(ReturnedMessageHandler.BUSINESS_DOMAIN_KEY);
 
-        // (2) 按业务域查询对应的回退处理器
+        final String domain
+            = (domainHeader instanceof String s) ? s : null;
+
+        // (2) 输出回退消息元数据
+        log.error(
+            "Message (which business-domain: {}, id = {}) returned (UNROUTABLE message will be LOST)."
+            + "(reply: [{}] {}, exchange: {}, routing key: {})",
+            StringUtils.hasText(domain) ? domain : "unknown",
+            messageProperties.getMessageId(),
+            returned.getReplyCode(),
+            returned.getReplyText(),
+            returned.getExchange(),
+            returned.getRoutingKey()
+        );
+
+        // (3) 按业务域查询对应的回退处理器
         final ReturnedMessageHandler handler
             = this.handlerMap.get(domain);
 
@@ -64,19 +87,17 @@ public class CompositeReturnsCallback implements RabbitTemplate.ReturnsCallback
             return;
         }
 
-        // (3) 输出回退消息的元数据
-        log.error(
-            "Message (which business-domain: {}, id = {}) returned (UNROUTABLE message will be LOST)."
-            + "(reply: [{}] {}, exchange: {}, routing key: {})",
-            domain,
-            messageProperties.getMessageId(),
-            returned.getReplyCode(),
-            returned.getReplyText(),
-            returned.getExchange(),
-            returned.getRoutingKey()
-        );
-
-        // (4) 执行该业务域的消息回退
-        handler.handler(returned);
+        try
+        {
+            // (4) 执行该业务域的消息回退
+            handler.handler(returned);
+        }
+        catch (Exception exception)
+        {
+            log.error(
+                "Returned message handler for domain {} failed.",
+                domain, exception
+            );
+        }
     }
 }
