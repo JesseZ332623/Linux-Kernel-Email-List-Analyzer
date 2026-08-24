@@ -151,6 +151,8 @@ linux_kernel_email_list_analyzer (父 POM)
 
 - [IMAP 连接实例 keep-alive 定期保活组件](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/develop/core/src/main/java/com/jesse/core/components/imap_connection/impl/ImapConnectionKeepAlive.java)
 
+- [全局消息回退处理器分发器](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/develop/core/src/main/java/com/jesse/core/components/rabbitmq_callback/CompositeReturnsCallback.java)
+
 - [TimeMonitor 计时器切面实现](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/develop/core/src/main/java/com/jesse/core/components/aspect/TimeMonitorAspect.java)
 
 - [表示一封内核补丁邮件在本服务所有状态的枚举](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/develop/core/src/main/java/com/jesse/core/enums/KernelEmailStatus.java)
@@ -197,4 +199,4 @@ linux_kernel_email_list_analyzer (父 POM)
 
 [Apache License Version 2.0](https://github.com/JesseZ332623/Linux-Kernel-Email-List-Analyzer/blob/main/LICENSE)
 
-## 2026.08.19
+## 2026.08.24
