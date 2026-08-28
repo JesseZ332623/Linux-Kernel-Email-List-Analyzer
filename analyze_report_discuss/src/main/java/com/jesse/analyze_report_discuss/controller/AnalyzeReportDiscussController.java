@@ -3,6 +3,11 @@ package com.jesse.analyze_report_discuss.controller;
 import com.jesse.analyze_report_discuss.exception.DiscussException;
 import com.jesse.analyze_report_discuss.request.ReportDiscussRequest;
 import com.jesse.analyze_report_discuss.service.AnalyzeReportDiscussService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
@@ -20,6 +25,7 @@ import java.util.Map;
 @RestController
 @RequestMapping(path = "/api/analyze-report")
 @RequiredArgsConstructor
+@Tag(name = " 内核邮件分析报告讨论")
 public class AnalyzeReportDiscussController
 {
     /** 内核邮件分析报告讨论服务接口。*/
@@ -85,8 +91,25 @@ public class AnalyzeReportDiscussController
 
     /** 在某个分析报告的会话下发起一次讨论。*/
     @PostMapping(path = "/discuss")
+    @Operation(summary = "在某个分析报告的会话下发起一次讨论")
+    @ApiResponse(
+        description = "SSE 数据流",
+        content     = @Content(
+            mediaType = "text/event-stream"
+        )
+    )
     public SseEmitter
-    analyzeReportDiscuss(@RequestBody ReportDiscussRequest request)
+    analyzeReportDiscuss(
+        @RequestBody
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "对某个分析报告发起讨论的请求体",
+            required    = true,
+            content     = @Content(
+                schema = @Schema(implementation = ReportDiscussRequest.class)
+            )
+        )
+        final ReportDiscussRequest request
+    )
     {
         final long timestamp        = System.currentTimeMillis();
         final SseEmitter sseEmitter = newSseEmitter(request, timestamp);

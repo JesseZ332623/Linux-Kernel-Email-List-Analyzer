@@ -1,0 +1,16 @@
+# Spring-Doc 属性配置文件
+
+springdoc:
+  api-docs:
+    path: /internal-api-docs
+    enabled: true
+
+  swagger-ui:
+    path: /endpoint-document.html # 访问地址
+    enabled: true
+
+  # 需要扫描的包路径
+  packages-to-scan:
+    - com.jesse.analyzer.controller
+    - com.jesse.analyze_report_discuss.controller
+    - com.jesse.response_audit.controller

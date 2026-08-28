@@ -108,13 +108,6 @@
             <version>3.20.0</version>
         </dependency>
 
-        <!-- Thymeleaf 负责分析模板的生成 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
-            <version>4.1.0</version>
-        </dependency>
-
         <!--
             Apache 基金会实现的 HTTP 客户端，
             功能齐全（连接池、重试、Keep-Alive、代理，认证等）供 Spring 的 RestTemplate 使用，
@@ -141,6 +134,18 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
+        </dependency>
+
+        <!-- SpringDoc OpenAPI 的 Web MVC 启动器 UI 模块 -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+
+        <!-- Thymeleaf 负责分析模板的生成 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
     </dependencies>
 

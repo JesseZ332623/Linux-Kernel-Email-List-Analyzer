@@ -1,0 +1,60 @@
+# 构建产物（只保留最终的 jar）
+target/*
+!target/*.jar
+!target/classes
+!target/dependency
+
+# 源代码（如果不需要）
+src/
+pom.xml
+mvnw
+mvnw.cmd
+.mvn/
+
+# 版本控制
+.git/
+.gitignore
+.gitattributes
+
+# IDE 文件
+.idea/
+*.iml
+.vscode/
+.eclipse/
+.settings/
+.classpath
+.project
+
+# 日志和临时文件
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+
+# 测试相关
+test/
+*.test
+*.spec
+
+# 文档
+README*
+LICENSE*
+docs/
+doc/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+Jenkinsfile
+Dockerfile*
+docker-compose*.yml
+
+# 其他
+*.md
+*.txt
+*.png
+*.jpg
+*.pdf
+.DS_Store
+Thumbs.db

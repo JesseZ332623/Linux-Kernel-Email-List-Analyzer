@@ -1,7 +1,7 @@
 # 全局雪花 ID 分配器镜像构建文件
 
-# 使用 openjdk 维护的 JDK 25 作为基础镜像
-FROM docker.m.daocloud.io/library/eclipse-temurin:25-jdk-noble
+# 使用 eclipse 维护的 JDK 25 作为基础镜像
+FROM docker.m.daocloud.io/library/eclipse-temurin:25-jre-noble
 
 # 设置时区
 ENV TZ=Asia/Shanghai

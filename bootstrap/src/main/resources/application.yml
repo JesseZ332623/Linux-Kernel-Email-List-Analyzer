@@ -36,3 +36,4 @@ spring:
       - classpath:config/time-period.yml
       - classpath:config/spring-statemachine.yml
       - classpath:config/minio.yml
+      - classpath:config/spring-doc.yml
