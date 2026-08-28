@@ -1,0 +1,9 @@
+{
+    "timestamp": 1787637643456,
+    "message":"No session selected.",
+    "data": {
+        "deletedSessions": 0,
+        "deletedSessionDetails": 0,
+        "sessionDetailsMap": {}
+    }
+}
