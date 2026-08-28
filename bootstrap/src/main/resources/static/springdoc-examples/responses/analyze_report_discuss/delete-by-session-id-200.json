@@ -1,0 +1,13 @@
+{
+    "timestamp": 1787637677917,
+    "message": "Delete 3 sessions from task id: fa97331d-6557-42ca-a222-a2dd31bc6d5e complete.",
+    "data": {
+        "deletedSessions": 3,
+        "deletedSessionDetails": 8,
+        "sessionDetailsMap": {
+            "eb7f90a1-60bb-48c3-bf09-8f63a52ec526": 4,
+            "70462e7e-7269-4f03-9f72-81b04ae5c0a4": 1,
+            "b50289bc-fcac-48e7-9c16-45c26f888ade": 3
+        }
+    }
+}
