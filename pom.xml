@@ -102,13 +102,6 @@
 				<version>3.20.0</version>
 			</dependency>
 
-			<!-- Thymeleaf 负责分析模板的生成 -->
-			<dependency>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-starter-thymeleaf</artifactId>
-				<version>4.1.0</version>
-			</dependency>
-
 			<!--
                 Apache 基金会实现的 HTTP 客户端，
                 功能齐全（连接池、重试、Keep-Alive、代理，认证等）供 Spring 的 RestTemplate 使用，
@@ -138,6 +131,18 @@
 				<version>2.53.0</version>
 				<type>pom</type>
 				<scope>import</scope>
+			</dependency>
+
+			<!--
+				SpringDoc OpenAPI 的 Web MVC 启动器 UI 模块，包括：
+				1. SpringDoc OpenAPI 核心功能（自动生成 API 文档）
+				2. Spring Web MVC 支持（适配 Spring MVC 框架）
+				3. Swagger UI 界面（提供可视化的文档浏览和调试界面）
+			-->
+			<dependency>
+				<groupId>org.springdoc</groupId>
+				<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+				<version>2.8.5</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
