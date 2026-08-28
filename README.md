@@ -33,7 +33,7 @@
     # containerd.io    底层容器运行时
     sudo apt-get install docker-ce docker-ce-cli containerd.io
     
-    # 按照 docker compose 插件，后面可以使用 docker compose 命令快速启动
+    # 安装 docker compose 插件，后面可以使用 docker compose 命令快速启动
     sudo apt-get install docker-compose-plugin
     ```
 
@@ -70,7 +70,7 @@ docker compose -p lkml_analyzer stop
 
 ### 访问
 
-服务启动后访问 `http://localhost:26543/endpoint-document.html` 浏览服务端点。
+服务启动后访问 http://localhost:26543/endpoint-document.html 浏览服务端点。
 
 ## 系统架构图
 
