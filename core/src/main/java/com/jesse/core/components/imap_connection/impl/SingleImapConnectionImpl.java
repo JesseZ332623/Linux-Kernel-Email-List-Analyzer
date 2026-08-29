@@ -41,7 +41,7 @@ public class SingleImapConnectionImpl implements SingleImapConnection
     private final Session session;
 
     /** 邮件服务 IMAP 连接实例。*/
-    private Store store;
+    private volatile Store store;
 
     /** Store 实例是否已经连接？ */
     private boolean isConnected() {
@@ -49,7 +49,7 @@ public class SingleImapConnectionImpl implements SingleImapConnection
     }
 
     /**
-     * {@link MessagingException} 是一个非常宽泛的异常，
+     * {@link MessagingException} 是一个非常宽泛地异常，
      * 我们需要进一步判断是否值得重试。
      */
     private boolean
@@ -89,28 +89,23 @@ public class SingleImapConnectionImpl implements SingleImapConnection
         this.store = newStore;
     }
 
-    /** 服务关闭的时候断开与邮箱服务的连接。*/
-    @PreDestroy
-    public void close()
-    {
-        try
-        {
-            if (this.isConnected())
-            {
-                this.store.close();
-                log.info("Closing email service connection...");
-            }
-        }
-        catch (MessagingException exception) {
-            log.error("Closing email service connection failed...", exception);
-        }
-    }
-
-
-    /** 在锁和自动重连保护下执行任意 Store 操作。*/
-    @Override
-    public <T> T
-    execute(StoreOperator<T> operation) throws MessagingException
+    /**
+     * 在锁和自动重连保护下执行任意 Store 操作。
+     *
+     * @param <T> operation 操作执行结果的类型
+     *
+     * @param operation        借用 {@link Store} 实例执行的操作
+     * @param remainingRetries 剩余的重连重试次数，为 0 时不再重试直接抛出
+     * @param discardStore     是否丢弃旧的 Store 实例标志位
+     *
+     * @return 返回 operation 操作执行的结果
+     */
+    private <T> T
+    executeWithRetries(
+        final StoreOperator<T> operation,
+        final int              remainingRetries,
+        final boolean          discardStore
+    ) throws MessagingException
     {
         final long waitSeconds
             = this.properties.getStoreLockWaitTimeout().toSeconds();
@@ -136,6 +131,10 @@ public class SingleImapConnectionImpl implements SingleImapConnection
                 throw new MessagingException("Interrupted before executing operation.");
             }
 
+            // 上一轮判定连接已失效，在锁内丢弃坏连接，
+            // 交由 ensureConnected 重建。
+            if (discardStore) { this.store = null; }
+
             // (2) 在锁内确保连接可用
             this.ensureConnected();
 
@@ -144,33 +143,44 @@ public class SingleImapConnectionImpl implements SingleImapConnection
         }
         catch (MessagingException exception)
         {
-            if (Thread.currentThread().isInterrupted()) {
-                Thread.currentThread().interrupt();
-            }
+            /*
+             * 2026.08.29 紧急修复
+             *
+             * 1. 中断判断 + 恢复中断标志位的操作在这里属于无效操作，
+             *    isInterrupted() 不清除标志，条件成立时标志本就在，再设一次无效；
+             *    标志真被清了则条件为假、不执行。两种情况都没用，这里直接去除。
+             *
+             * 2. 在锁超时后 + isRetryException() 返回 true 的情况下，
+             *    operation.execute(this.store) 调用不受锁的保护，
+             *    这又回到最初并发操作同一个有状态的 Store 的大坑里面去了。。。
+             *    所以我的修复方案总结是这样的：“有中止条件的 this.execute(operation) 递归重试”，
+             *    具体看提交变更。
+             */
 
-            // 如果执行业务逻辑时连接意外关闭，重连再次执行
-            if (this.isRetryException(exception))
-            {
-                log.warn(
-                    "Connection lost during operation, attempting reconnect.",
-                    exception
-                );
+            // 在重试预算耗尽、线程已经被中断或异常不值得重试的情况下，
+            // 一律向外传播异常。
+            if (
+                remainingRetries <= 0                    ||
+                Thread.currentThread().isInterrupted()   ||
+                !this.isRetryException(exception)
+            )
+            { throw exception; }
 
-                this.store = null;
-                this.ensureConnected();
+            log.warn(
+                "Connection lost during operation, attempting reconnect.",
+                exception
+            );
 
-                return operation.execute(this.store);  // 重试一次
-            }
-
-            // 反之向外传递异常
-            throw exception;
+            // 消耗一次 remainingRetries 执行重试，
+            // 且下次重试要重建连接。
+            return this.executeWithRetries(operation, remainingRetries - 1, true);
         }
         catch (InterruptedException exception)
         {
             Thread.currentThread().interrupt();
 
             throw new
-            MessagingException("Interrupted during waiting store lock.");
+                MessagingException("Interrupted during waiting store lock.");
         }
         finally
         {
@@ -178,5 +188,32 @@ public class SingleImapConnectionImpl implements SingleImapConnection
                 this.lock.unlock();
             }
         }
+    }
+
+    /** 服务关闭的时候断开与邮箱服务的连接。*/
+    @PreDestroy
+    public void close()
+    {
+        try
+        {
+            if (this.isConnected())
+            {
+                this.store.close();
+                log.info("Closing email service connection...");
+            }
+        }
+        catch (MessagingException exception) {
+            log.error("Closing email service connection failed...", exception);
+        }
+    }
+
+
+    /** 在锁和自动重连保护下执行任意 Store 操作。*/
+    @Override
+    public <T> T
+    execute(StoreOperator<T> operation) throws MessagingException
+    {
+        // 默认只允许重试一次，一个 operation 任务不要占用锁太长时间。
+        return this.executeWithRetries(operation, 1, false);
     }
 }
