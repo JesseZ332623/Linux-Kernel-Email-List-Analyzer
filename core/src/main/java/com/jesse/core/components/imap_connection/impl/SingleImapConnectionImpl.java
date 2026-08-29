@@ -40,7 +40,36 @@ public class SingleImapConnectionImpl implements SingleImapConnection
     @Qualifier(value = "gmail-session")
     private final Session session;
 
-    /** 邮件服务 IMAP 连接实例。*/
+    /**
+     * 邮件服务 IMAP 连接实例。
+     *
+     * <p><b>2026.08.29 PR #65 紧急修复后的注释补充</b></p>
+     *
+     * <p>该字段必须用 {@code volatile} 修饰，它处理以下三种情况：</p>
+     *
+     * <ol>
+     *     <li>
+     *         防止 Spring 容器线程调用 {@link #close()} 关闭连接时，
+     *         与 {@link #ensureConnected()} 重建连接并行产生的可见性问题 ——
+     *         这个时间窗口非常小，但值得关注。
+     *     </li>
+     *     <li>
+     *         {@link #isRetryException(MessagingException)} 在
+     *         {@link #executeWithRetries(StoreOperator, int, boolean)} 的 catch 块中调用，
+     *         而那是锁超时路径，因此 {@link #isConnected()} 是一次货真价实的运行期<b>锁外读</b>；
+     *         不加 {@code volatile} 可能读到旧值，从而误判"值不值得重试"。
+     *     </li>
+     *     <li>
+     *         <b>最重要的一条在 {@link #connect()} 内。</b>
+     *         {@code newStore.connect()} 内部会写入大量对象状态，随后 {@code this.store = newStore}
+     *         发布引用 —— 但这两组写之间<b>没有 happens-before 边</b>。
+     *         其他线程（如锁外的 {@link #isConnected()}）可能看到非 null 的新引用，
+     *         却看不到 {@code connect()} 写入的内部状态，即读到一个「已发布但未初始化完毕」的 Store。
+     *         这就是经典的<b>不安全发布</b>，与双重检查锁定失效同源。
+     *         {@code volatile} 写会在此处插入内存屏障、建立 happens-before，保证"连接已建好"对读线程真正可见。
+     *     </li>
+     * </ol>
+     */
     private volatile Store store;
 
     /** Store 实例是否已经连接？ */
