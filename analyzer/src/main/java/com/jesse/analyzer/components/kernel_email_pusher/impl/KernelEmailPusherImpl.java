@@ -136,13 +136,13 @@ public class KernelEmailPusherImpl implements KernelEmailPusher
         fetchProfile.add(FetchProfile.Item.ENVELOPE);
 
         /*
-         * ENVELOPE 预取配置会在 Folder::fetch() 方法
+         * UID 预取配置会在 Folder::fetch() 方法
          * 执行时获取邮件的唯一 ID。
          */
         fetchProfile.add(UIDFolder.FetchProfileItem.UID);
 
         /*
-         * ENVELOPE 预取配置会在 Folder::fetch() 方法
+         * MESSAGE 预取配置会在 Folder::fetch() 方法
          * 执行时获取邮件的正文内容。
          */
         fetchProfile.add(IMAPFolder.FetchProfileItem.MESSAGE);
