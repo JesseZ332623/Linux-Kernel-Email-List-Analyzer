@@ -1,0 +1,22 @@
+# 默认：让 git 自动识别文本文件，仓库内统一存 LF
+* text=auto
+
+# 以下文件类型无论在什么平台，工作区都强制 LF
+*.sh        text eol=lf
+*.bash      text eol=lf
+Dockerfile* text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.sql       text eol=lf
+.env*       text eol=lf
+
+# Windows 专用脚本保持 CRLF
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
+
+# 二进制文件不做任何转换
+*.png       binary
+*.jpg       binary
+*.jar       binary
+*.gz        binary
