@@ -37,10 +37,21 @@ public interface AIModelAnswerUsageRepository
     /**
      * 按模型分组，汇总一天内所有模型的 Token 消耗明细。
      *
-     * <h3>2026.07.17 新增</h3>
+     * <p><b>2026.07.17 新增</b></p>
+     *
      * DeepSeek 模型 7 月中旬开始采用峰谷策略对 Token 进行计费，
      * 峰期为 [09:00, 12:00) 和 [14：00, 18:00)，在此期间双倍收费。
      * 所以需要判断每个明细的时间是否在峰期区间内，再按此分组。
+     *
+     * <p><b>2026.09.01 新增</b></p>
+     *
+     * DeepSeek 模型从 8 月 23 日晚 12 点开始，
+     * 对峰谷策略计费进行调整，具体如下所示：
+     *
+     * <ol>
+     *     <li>工作日（周一至周五）：继续执行原有峰谷分段计费</li>
+     *     <li>周末（周六、周日）：统一按照低谷时段价格收取调整费用</li>
+     * </ol>
      */
     @Select("""
         SELECT
@@ -49,8 +60,11 @@ public interface AIModelAnswerUsageRepository
             SUM(token_usage.prompt_cache_miss_tokens) AS promptCacheMissTokens,
             SUM(token_usage.completion_tokens)        AS completionTokens,
             CASE WHEN
-                HOUR(audit.create_at) >= 9 AND HOUR(audit.create_at) < 12
-                OR HOUR(audit.create_at) >= 14 AND HOUR(audit.create_at) < 18
+                DAYOFWEEK(audit.create_at) IN (1, 7)
+            THEN FALSE
+            WHEN
+                (HOUR(audit.create_at) >= 9 AND HOUR(audit.create_at) < 12)
+                OR (HOUR(audit.create_at) >= 14 AND HOUR(audit.create_at) < 18)
             THEN TRUE
             ELSE FALSE
             END AS isPeak
