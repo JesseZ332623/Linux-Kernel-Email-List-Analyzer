@@ -12,20 +12,19 @@ import com.jesse.analyze_report_discuss.exception.DiscussException;
 import com.jesse.analyze_report_discuss.request.ReportDiscussRequest;
 import com.jesse.analyze_report_discuss.service.AnalyzeReportDiscussService;
 import com.jesse.analyze_report_discuss.service.AnalyzeReportDiscussSessionDetailsService;
-import com.jesse.core.utils.HttpClientUtils;
-import com.jesse.core.properties.DeepSeekAnalyzerReportDiscussProperties;
-import com.jesse.core.properties.DeepSeekChatProperties;
-import com.jesse.core.repository.ApplicationApiKeysRepository;
+import com.jesse.core.components.llm_client.LLMClient;
+import com.jesse.core.pojo.ai.AIModelChatMessage;
+import com.jesse.core.pojo.DeepSeekChatProperties;
+import com.jesse.core.properties.DeepSeekChatPropertiesMap;
 import com.jesse.response_audit.service.AIModelAnswerAuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import static java.lang.String.format;
@@ -42,10 +41,6 @@ public class AnalyzeReportDiscussServiceImpl
 
     /** 通用 Jackson 对象映射器。*/
     private final ObjectMapper objectMapper;
-
-    /** 第三方应用访问 API Keys 表仓库类。*/
-    private final
-    ApplicationApiKeysRepository apiKeysRepository;
 
     /** AI 模型响应审计表服务类接口。*/
     private final
@@ -67,15 +62,11 @@ public class AnalyzeReportDiscussServiceImpl
     private final
     AnalyzeReportDiscussAbstractor analyzeReportDiscussAbstractor;
 
-    /** OK HTTP 客户端，专用于处理 SSE 协议的响应数据。*/
-    private final OkHttpClient okHttpClient;
+    /** LLM 大模型 API 对接客户端接口。*/
+    private final LLMClient llmClient;
 
-    /** 自定义 OK HTTP 工具类。*/
-    private final HttpClientUtils httpClientUtils;
-
-    /** DeepSeek 分析报告答疑解惑模块模型属性配置类。*/
-    private final
-    DeepSeekAnalyzerReportDiscussProperties properties;
+    /** DeepSeek 模型（业务域 -> 模型属性）映射表配置类。*/
+    private final DeepSeekChatPropertiesMap properties;
 
     /** 内核邮件分析报告讨论专用虚拟线程池执行器。*/
     @Qualifier("analyze-report-discuss-executor")
@@ -133,7 +124,7 @@ public class AnalyzeReportDiscussServiceImpl
         final String sessionId = discussRequest.getSessionId();
         final String question  = discussRequest.getQuestion();
 
-        // (1) 插入一条新的会话明细
+        // (1) 插入一条新地会话明细
         long sessionDetailId
             = this.discussSessionDetailsService
                   .insertNewSessionDetail(sessionId, question);
@@ -164,18 +155,18 @@ public class AnalyzeReportDiscussServiceImpl
                       question
                   );
 
-        // (5) 获取讨论任务大模型的 API Key
-        final String apiKey
-            = this.apiKeysRepository
-                  .findByAppName(chatProperties.getAuthorizationName());
+        // (5) 构造提示词列表
+        final List<AIModelChatMessage> prompts
+            = List.of(
+                new AIModelChatMessage("system", chatSysPrompt),
+                new AIModelChatMessage("user", chatUsrPrompt)
+            );
 
-        // (6) 构造请求体
-        final Request request
-            = this.httpClientUtils
-                  .makeOkRequest(apiKey, chatSysPrompt, chatUsrPrompt, chatProperties);
+        // (6) 构造异步响应处理回调实例。
+        final Callback sseCallback
+            = this.newSSECallback(sessionDetailId, discussRequest, sseEmitter);
 
-        // (7) 发起请求，异步的往前端推送数据流
-        this.okHttpClient.newCall(request)
-            .enqueue(this.newSSECallback(sessionDetailId, discussRequest, sseEmitter));
+        // (7) 发起异步讨论请求
+        this.llmClient.stream(chatProperties, prompts, sseCallback);
     }
 }
