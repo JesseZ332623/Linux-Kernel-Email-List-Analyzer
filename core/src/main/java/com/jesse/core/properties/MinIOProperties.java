@@ -22,7 +22,4 @@ public class MinIOProperties
 
     /** 秘密密钥（对应密码）*/
     private String secretKey;
-
-    /** 存储分析报告对象的桶名 */
-    private String analyzeReportBucket;
 }
