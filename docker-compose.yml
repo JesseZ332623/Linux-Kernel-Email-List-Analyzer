@@ -1,3 +1,5 @@
+# 服务编排配置文件
+
 services:
 
   # MySQL 容器属性配置
@@ -185,7 +187,8 @@ services:
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: ${SPRING_RABBITMQ_USERNAME}
       SPRING_RABBITMQ_PASSWORD: ${SPRING_RABBITMQ_PASSWORD}
-
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
       # docker 内部使用服务名进行内部通信
       APP_ID_CONSUMER_DIRECTORY_URLS_NEXT: http://id-allocator-service:34334/api/id_allocator/next
       APP_ID_CONSUMER_DIRECTORY_URLS_NEXT_BATCH: http://id-allocator-service:34334/api/id_allocator/next-batch
