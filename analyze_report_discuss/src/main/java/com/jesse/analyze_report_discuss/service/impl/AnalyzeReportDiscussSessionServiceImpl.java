@@ -136,7 +136,7 @@ public class AnalyzeReportDiscussSessionServiceImpl
         return this.baseMapper.getConversationsBySessionId(page, sessionId);
     }
 
-    /** 在指定分析报告下创建一个新的会话。*/
+    /** 在指定分析报告下创建一个新地会话。*/
     @Override
     public UUID createNewDiscussSession(String taskId)
     {
@@ -151,7 +151,7 @@ public class AnalyzeReportDiscussSessionServiceImpl
             = this.kernelEmailAnalyzeReportCacher.getOrLoad(taskId);
 
         final String emailSubject
-            = analyzeReport.orElseThrow(() -> DiscussSessionException.make(taskId))
+            = analyzeReport.orElseThrow(() -> DiscussSessionException.make(taskId, "Report not exist!"))
                 .getEmailSubject();
 
         final AnalyzeReportDiscussSession newDiscussSession

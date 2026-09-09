@@ -12,10 +12,10 @@ spring:
 
 app:
   redis:
-    host: localhost
-    port: 6379
-    username: Jesse
-    password: 1234567890
+    host: ${SPRING_REDIS_HOST:localhost}
+    port: ${SPRING_REDIS_PORT:6379}
+#    username: Jesse
+#    password: 1234567890
     database: 0
 
   # 内核邮件分析报告文本缓存属性

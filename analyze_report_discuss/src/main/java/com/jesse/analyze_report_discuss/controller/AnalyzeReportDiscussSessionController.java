@@ -2,6 +2,7 @@ package com.jesse.analyze_report_discuss.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jesse.analyze_report_discuss.dto.ConversationsBySessionId;
+import com.jesse.analyze_report_discuss.exception.DiscussSessionException;
 import com.jesse.analyze_report_discuss.request.ConversationPagesRequest;
 import com.jesse.analyze_report_discuss.request.DeleteSelectedSessionRequest;
 import com.jesse.analyze_report_discuss.request.PaginateConversationRequest;
@@ -223,7 +224,7 @@ public class AnalyzeReportDiscussSessionController
     }
 
 
-    /** 在指定分析报告下创建一个新的会话。*/
+    /** 在指定分析报告下创建一个新地会话。*/
     @PostMapping
     @Operation(summary = "在指定分析报告下创建一个新的会话")
     @ApiResponses({
@@ -285,16 +286,28 @@ public class AnalyzeReportDiscussSessionController
             );
         }
 
-        final UUID sessionId
-            = this.analyzeReportDiscussSessionService
-                  .createNewDiscussSession(taskId);
+        try
+        {
+            final UUID sessionId
+                = this.analyzeReportDiscussSessionService
+                      .createNewDiscussSession(taskId);
 
-        return
-        CustomizedResponse.responseOf(
-            response, HttpStatus.OK,
-            "Create session success.",
-            sessionId.toString()
-        );
+            return
+            CustomizedResponse.responseOf(
+                response, HttpStatus.OK,
+                "Create session success.",
+                sessionId.toString()
+            );
+        }
+        catch (DiscussSessionException discussSessionException)
+        {
+            return
+            CustomizedResponse.responseOf(
+                response, HttpStatus.BAD_REQUEST,
+                discussSessionException.getMessage(),
+                null
+            );
+        }
     }
 
     /** 删除一个分析报告下选中的会话 ID。*/
