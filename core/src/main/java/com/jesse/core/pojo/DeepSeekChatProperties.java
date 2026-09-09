@@ -1,17 +1,13 @@
-package com.jesse.core.properties;
+package com.jesse.core.pojo;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 /** DeepSeek 模型对话属性配置类。*/
 @Data
 @ToString
 @EqualsAndHashCode
-@Component
-@ConfigurationProperties(prefix = "app.deepseek-chat.lkml-analyzer")
 public class DeepSeekChatProperties
 {
     /** AI 模型对话端点 */
