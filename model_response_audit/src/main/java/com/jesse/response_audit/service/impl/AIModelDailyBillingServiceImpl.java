@@ -10,7 +10,6 @@ import com.jesse.response_audit.repository.AIModelDailyBillingRepository;
 import com.jesse.response_audit.service.AIModelDailyBillingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,10 +30,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AIModelDailyBillingServiceImpl implements AIModelDailyBillingService
 {
-    /** 默认模型名称（如果查询不到 Token 资费计算器就按这个兜底）*/
-    private static final
-    String DEFAULT_MODEL_NAME = "deepseek-v4-flash";
-
     /** 全局 ID 消费机接口。*/
     private final GlobalIdConsumer globalIdConsumer;
 
@@ -46,35 +41,12 @@ public class AIModelDailyBillingServiceImpl implements AIModelDailyBillingServic
     private final
     AIModelAnswerUsageRepository aiModelAnswerUsageRepository;
 
-    /** 模型计算器表。*/
-    @Qualifier("model-token-calculator-map")
-    private final
-    Map<String, ModelTokenCalculator> modelTokenCalculatorMap;
+    /** 模型计算器实现类。*/
+    private final ModelTokenCalculator modelTokenCalculator;
 
     /** 是否正在执行保存？避免自动 / 手动调用冲突。*/
     private final
     AtomicBoolean saving = new AtomicBoolean(false);
-
-    /** 获取大模型对应的 Token 资费计算器实例。*/
-    private ModelTokenCalculator
-    selectCalculator(String modelName)
-    {
-        if (!this.modelTokenCalculatorMap.containsKey(modelName))
-        {
-            log.warn(
-                "Model {} specialized token calculator not found." +
-                "Charged according to {} standard, please make up for it in a timely manner.",
-                modelName, DEFAULT_MODEL_NAME
-            );
-        }
-
-        return
-        this.modelTokenCalculatorMap
-            .getOrDefault(
-                modelName,
-                this.modelTokenCalculatorMap.get(DEFAULT_MODEL_NAME)
-            );
-    }
 
     /** 组装 Token 消耗与资费汇总实体。*/
     private AIModelDailyBillingEntity makeDailyBilling(
@@ -87,27 +59,23 @@ public class AIModelDailyBillingServiceImpl implements AIModelDailyBillingServic
         final AIModelDailyBillingEntity dailyBilling
             = new AIModelDailyBillingEntity();
 
+        long totalPromptCacheHitTokens  = 0L;
+        long totalPromptCacheMissTokens = 0L;
+        long totalCompletionTokens      = 0L;
+
+        for (AIModelAnswerUsageDTO usage : dailyUsages)
+        {
+            totalPromptCacheHitTokens  += usage.getPromptCacheHitTokens();
+            totalPromptCacheMissTokens += usage.getPromptCacheMissTokens();
+            totalCompletionTokens      += usage.getCompletionTokens();
+        }
+
         dailyBilling.setId(this.globalIdConsumer.nextId());
         dailyBilling.setBillingDate(yesterday);
         dailyBilling.setModelName(modelName);
-
-        dailyBilling.setTotalPromptCacheHitTokens(
-            dailyUsages.stream()
-                .mapToLong(AIModelAnswerUsageDTO::getPromptCacheHitTokens)
-                .sum()
-        );
-
-        dailyBilling.setTotalPromptCacheMissTokens(
-            dailyUsages.stream()
-                .mapToLong(AIModelAnswerUsageDTO::getPromptCacheMissTokens)
-                .sum()
-        );
-
-        dailyBilling.setTotalCompletionTokens(
-            dailyUsages.stream()
-                .mapToLong(AIModelAnswerUsageDTO::getCompletionTokens)
-                .sum()
-        );
+        dailyBilling.setTotalPromptCacheHitTokens(totalPromptCacheHitTokens);
+        dailyBilling.setTotalPromptCacheMissTokens(totalPromptCacheMissTokens);
+        dailyBilling.setTotalCompletionTokens(totalCompletionTokens);
 
         dailyBilling.setTotalCostRmb(costRmb);
         dailyBilling.setCreateAt(LocalDateTime.now(ZoneUtils.LOCAL_TIMEZONE));
@@ -186,22 +154,15 @@ public class AIModelDailyBillingServiceImpl implements AIModelDailyBillingServic
                 final String modelName                        = modelDailyUsage.getKey();
                 final List<AIModelAnswerUsageDTO> dailyUsages = modelDailyUsage.getValue();
 
-                // (3) 获取大模型对应的 Token 资费计算器实例
-                //（查不到就按 DEFAULT_MODEL 兜底并告警）
-                final ModelTokenCalculator calculator
-                    = this.selectCalculator(modelName);
-
-                // (4) 计算该模型昨日总共的 Token 资费消耗
+                // (3) 计算该模型昨日的 token 资费
                 final BigDecimal costRmb
-                    = dailyUsages.stream()
-                        .map(calculator::calculate)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    = this.modelTokenCalculator.calculate(modelName, dailyUsages);
 
-                // (5) 组装 Token 消耗与资费汇总实体
+                // (4) 组装 Token 消耗与资费汇总实体
                 final AIModelDailyBillingEntity dailyBilling
                     = this.makeDailyBilling(yesterday, modelName, costRmb, dailyUsages);
 
-                // (6) 保存昨日的 Token 消耗与资费汇总数据
+                // (5) 保存昨日的 Token 消耗与资费汇总数据
                 this.aiModelDailyBillingRepository.upsertBilling(dailyBilling);
             }
 
@@ -212,7 +173,7 @@ public class AIModelDailyBillingServiceImpl implements AIModelDailyBillingServic
             );
         }
         finally {
-            // (7) 翻转运行标志位
+            // (6) 翻转运行标志位
             this.saving.set(false);
         }
 
