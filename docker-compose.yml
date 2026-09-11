@@ -57,7 +57,7 @@ services:
     healthcheck:
       # CMD 是 docker healthcheck 的两个执行模式关键字
       # 直接调用后面列出的可执行文件 + 选项参数
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pjesse_root"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
       interval: 10s # 执行间隔（从上一次执行完毕后算起）
       timeout: 3s   # 单次 ping 如果超过 3 秒，算一次失败
       retries: 3    # 连续失败 3 次就标记为不健康
