@@ -21,6 +21,21 @@ DEFAULT CHARSET=utf8mb4
 COLLATE=utf8mb4_0900_ai_ci
 COMMENT='第三方应用访问 API Keys 表';
 
+CREATE TABLE `lkml_analyze`.`ai_model_token_pricing`(
+    `id`                      BIGINT         NOT NULL AUTO_INCREMENT,
+    `model_name`              VARCHAR(255)   NOT NULL COMMENT '模型名称',
+    `prompt_cache_hit_price`  DECIMAL(12, 6) NOT NULL COMMENT '每百万输入（缓存命中）的价格（单价：元，保留六位小数）',
+    `prompt_cache_miss_price` DECIMAL(12, 6) NOT NULL COMMENT '每百万输入（缓存未命中）的价格（单价：元，保留六位小数）',
+    `completion_price`        DECIMAL(12, 6) NOT NULL COMMENT '每百万输出的价格（单价：元，保留六位小数）',
+    `create_at`               DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '模型定价创建时间',
+    `update_at`               DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '模型定价修改时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_model_name` (`model_name`) USING BTREE
+) ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE=utf8mb4_0900_ai_ci
+COMMENT = '大模型 Token 定价表';
+
 CREATE TABLE `ai_model_answer_audit` (
   `id` 				   BIGINT       NOT NULL,
   `task_id` 		   CHAR(36)     NOT NULL COMMENT '本次大模型请求的唯一标识符，用于追踪和问题排查',
