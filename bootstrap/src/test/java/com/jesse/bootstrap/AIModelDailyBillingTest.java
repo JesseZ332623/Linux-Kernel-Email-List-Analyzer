@@ -35,39 +35,13 @@ public class AIModelDailyBillingTest
     @Autowired
     private AIModelDailyBillingRepository aiModelDailyBillingRepository;
 
-    /** 模型计算器表。*/
+    /** 模型计算器实现类。*/
     @Autowired
-    @Qualifier("model-token-calculator-map")
-    private Map<String, ModelTokenCalculator> modelTokenCalculatorMap;
+    private ModelTokenCalculator modelTokenCalculator;
 
     /** 全局 ID 消费机接口。*/
     @Autowired
     private GlobalIdConsumer globalIdConsumer;
-
-    /** 默认模型名称（如果查询不到 Token 资费计算器就按这个兜底）*/
-    private static final
-    String DEFAULT_MODEL_NAME = "deepseek-v4-flash";
-
-    /** 获取大模型对应的 Token 资费计算器实例。*/
-    private ModelTokenCalculator
-    selectCalculator(String modelName)
-    {
-        if (!this.modelTokenCalculatorMap.containsKey(modelName))
-        {
-            log.warn(
-                "Model {} specialized token calculator not found." +
-                "Charged according to {} standard, please make up for it in a timely manner.",
-                modelName, DEFAULT_MODEL_NAME
-            );
-        }
-
-        return
-        this.modelTokenCalculatorMap
-            .getOrDefault(
-                modelName,
-                this.modelTokenCalculatorMap.get(DEFAULT_MODEL_NAME)
-            );
-    }
 
     @Test
     @Transactional(readOnly = true)
@@ -92,16 +66,9 @@ public class AIModelDailyBillingTest
             final String modelName                        = modelDailyUsage.getKey();
             final List<AIModelAnswerUsageDTO> dailyUsages = modelDailyUsage.getValue();
 
-            // (2) 获取大模型对应的 Token 资费计算器实例
-            //（查不到就按 DEFAULT_MODEL 兜底并告警）
-            final ModelTokenCalculator calculator
-                = this.selectCalculator(modelName);
-
-            // (3) 计算该模型昨日总共的 Token 资费消耗
+            // (2) 计算该模型昨日的 token 资费
             final BigDecimal costRmb
-                = dailyUsages.stream()
-                    .map(calculator::calculate)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                = this.modelTokenCalculator.calculate(modelName, dailyUsages);
 
             log.info(
                 "Model: {} cost {} RMB from {} to {}",
