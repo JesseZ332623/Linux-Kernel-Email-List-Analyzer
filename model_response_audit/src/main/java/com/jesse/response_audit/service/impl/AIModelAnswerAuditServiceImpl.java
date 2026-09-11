@@ -71,10 +71,10 @@ public class AIModelAnswerAuditServiceImpl implements AIModelAnswerAuditService
         // (1) 保存模型信息摘要数据
         this.aiModelAnswerAuditRepository.insert(audit);
 
-        // (3) 保存模型回复文本数据
+        // (2) 保存模型回复文本数据
         this.aiModelAnswerContentRepository.insert(content);
 
-        // (4) 保存模型 Token 消耗明细数据
+        // (3) 保存模型 Token 消耗明细数据
         this.aiModelAnswerUsageRepository.insert(usage);
 
         log.info(
