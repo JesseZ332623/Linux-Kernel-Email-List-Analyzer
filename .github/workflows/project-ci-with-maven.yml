@@ -31,7 +31,7 @@ jobs:
 
       # 用 Maven 构建项目
       - name: Build with Maven
-        run: mvn -B clean package --file pom.xml -DskipTests   # 先不跑测试，加快反馈
+        run: mvn -B clean package --file pom.xml # 测试用例完善后，CI 需要允许测试用例
 
       # 在往 main 分支提交、合并的时候，
       # 将打包好的 JAR 包上传
