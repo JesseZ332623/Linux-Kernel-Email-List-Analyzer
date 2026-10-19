@@ -30,6 +30,44 @@
             <artifactId>analyze_report_discuss</artifactId>
             <version>${revision}</version>
         </dependency>
+
+        <!-- Testcontainers：MySQL 方言集成测试底座（版本由 Spring Boot BOM 管理） -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mysql</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- MockServer（GlobalIdConsumer 外部端点集成测试：容器化 HTTP 桩） -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mockserver</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-client-java</artifactId>
+            <version>5.15.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- GreenMail：嵌入式 IMAP 服务器（imap_connection 组件集成测试） -->
+        <dependency>
+            <groupId>com.icegreen</groupId>
+            <artifactId>greenmail-junit5</artifactId>
+            <version>2.1.6</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
