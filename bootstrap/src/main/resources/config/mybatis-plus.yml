@@ -1,8 +1,8 @@
 # Mybatis-Plus 属性配置
 
 mybatis-plus:
-  # 枚举类扫描包路径
-  type-enums-package: com.jesse.analyzer.components.state_machine
+  # 枚举类包扫描路径（KernelEmailStatus 携带 @EnumValue，位于 com.jesse.core.enums）
+  type-enums-package: com.jesse.core.enums
 
   configuration:
     # 不输出任何有关本依赖的日志
