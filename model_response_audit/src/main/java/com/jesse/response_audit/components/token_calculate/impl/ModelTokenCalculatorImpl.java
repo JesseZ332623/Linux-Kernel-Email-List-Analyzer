@@ -20,7 +20,7 @@ public class ModelTokenCalculatorImpl implements ModelTokenCalculator
 {
     /** 默认模型名称（如果查询不到 Token 定价就按这个兜底）。*/
     private static final
-    String DEFAULT_MODEL_NAME = "deepseek-v4-flash";
+    String DEFAULT_MODEL_NAME = "deepseek-flash";
 
     /** 大模型 Token 定价表仓储类。*/
     private final
