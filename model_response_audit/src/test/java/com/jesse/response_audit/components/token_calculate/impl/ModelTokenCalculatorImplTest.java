@@ -47,12 +47,12 @@ class ModelTokenCalculatorImplTest
     @DisplayName("按每百万 token 单价线性计费")
     void chargesPerMillionTokens()
     {
-        when(this.pricingRepository.getPricingByModelName("deepseek-v4-flash"))
+        when(this.pricingRepository.getPricingByModelName("deepseek-flash"))
             .thenReturn(Optional.of(this.pricing("0.02", "1.00", "2.00")));
 
         // 命中 1_000_000 token -> 0.02 元
         final BigDecimal cost = this.calculator.calculate(
-            "deepseek-v4-flash",
+            "deepseek-flash",
             List.of(this.usage(1_000_000L, 0L, 0L, false))
         );
 
@@ -63,11 +63,11 @@ class ModelTokenCalculatorImplTest
     @DisplayName("峰期消耗按双倍计费")
     void peakUsageIsDoubled()
     {
-        when(this.pricingRepository.getPricingByModelName("deepseek-v4-flash"))
+        when(this.pricingRepository.getPricingByModelName("deepseek-flash"))
             .thenReturn(Optional.of(this.pricing("0.02", "1.00", "2.00")));
 
         final BigDecimal cost = this.calculator.calculate(
-            "deepseek-v4-flash",
+            "deepseek-flash",
             List.of(this.usage(1_000_000L, 0L, 0L, true))
         );
 
@@ -78,12 +78,12 @@ class ModelTokenCalculatorImplTest
     @DisplayName("多段用量累加求和")
     void sumsMultipleUsages()
     {
-        when(this.pricingRepository.getPricingByModelName("deepseek-v4-flash"))
+        when(this.pricingRepository.getPricingByModelName("deepseek-flash"))
             .thenReturn(Optional.of(this.pricing("0.02", "1.00", "2.00")));
 
         // 两段各命中 1_000_000 -> 0.02 + 0.02 = 0.04
         final BigDecimal cost = this.calculator.calculate(
-            "deepseek-v4-flash",
+            "deepseek-flash",
             List.of(
                 this.usage(1_000_000L, 0L, 0L, false),
                 this.usage(1_000_000L, 0L, 0L, false)
@@ -94,12 +94,12 @@ class ModelTokenCalculatorImplTest
     }
 
     @Test
-    @DisplayName("查不到模型定价时按默认模型 deepseek-v4-flash 兜底计费")
+    @DisplayName("查不到模型定价时按默认模型 deepseek-flash 兜底计费")
     void fallsBackToDefaultModelPricing()
     {
         when(this.pricingRepository.getPricingByModelName("unknown-model"))
             .thenReturn(Optional.empty());
-        when(this.pricingRepository.getPricingByModelName("deepseek-v4-flash"))
+        when(this.pricingRepository.getPricingByModelName("deepseek-flash"))
             .thenReturn(Optional.of(this.pricing("0.02", "1.00", "2.00")));
 
         final BigDecimal cost = this.calculator.calculate(
@@ -116,7 +116,7 @@ class ModelTokenCalculatorImplTest
     {
         when(this.pricingRepository.getPricingByModelName("unknown-model"))
             .thenReturn(Optional.empty());
-        when(this.pricingRepository.getPricingByModelName("deepseek-v4-flash"))
+        when(this.pricingRepository.getPricingByModelName("deepseek-flash"))
             .thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
