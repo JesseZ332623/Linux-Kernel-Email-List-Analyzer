@@ -5,6 +5,7 @@ import com.jesse.analyzer.components.kernel_email_analyzer.KernelEmailAIModelAna
 import com.jesse.analyzer.components.state_machine.KernelEmailEvents;
 import com.jesse.analyzer.components.state_machine.KernelEmailStateMachine;
 import com.jesse.core.components.llm_client.LLMClient;
+import com.jesse.core.components.llm_client.exception.LLMClientException;
 import com.jesse.core.pojo.ai.AIModelChatMessage;
 import com.jesse.core.properties.DeepSeekChatPropertiesMap;
 import com.jesse.core.response.AIModelAnswerResponse;
@@ -14,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -134,7 +134,7 @@ public class KernelEmailDeepSeekAnalyzer implements KernelEmailAIModelAnalyzer
             // (6) 返回响应体
             return analyzeResponse;
         }
-        catch (JsonProcessingException | RestClientException exception)
+        catch (LLMClientException exception)
         {
             // 如果出现 API 调用错误或者响应体 JSON 解析错误，
             // 则重置分析执行状态为分析失败
