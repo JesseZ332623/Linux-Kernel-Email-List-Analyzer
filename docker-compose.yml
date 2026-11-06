@@ -1,5 +1,4 @@
 # 服务编排配置文件
-
 services:
 
   # MySQL 容器属性配置
@@ -119,7 +118,7 @@ services:
 
   # MinIO 对象存储服务容器属性
   minio:
-    image: minio/minio:latest
+    image: pgsty/minio:latest
     container_name: lkml-analyzer-minio
     ports:
       - "9000:9000" # API 端口
@@ -199,7 +198,7 @@ services:
       APP_EMAIL_PROXY_PORT: 10808
 
       # 每次往消息队列推送的内核补丁邮件数量
-      APP_LKML_PUSH_LIMIT: 5
+      APP_LKML_PUSH_LIMIT: 1
 
       # MinIO OSS 服务访问端点
       APP_MINIO_ENDPOINT: http://minio:9000
