@@ -1,6 +1,5 @@
 package com.jesse.analyze_report_discuss.components.discuss_abstract.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jesse.analyze_report_discuss.components.discuss_abstract.AnalyzeReportDiscussAbstractor;
 import com.jesse.analyze_report_discuss.components.prompt_reader.ModelPromptReader;
 import com.jesse.analyze_report_discuss.components.report_cache.AnalyzerReportDiscussAbstractCacher;
@@ -9,6 +8,7 @@ import com.jesse.analyze_report_discuss.dto.KernelEmailAnalyzeReport;
 import com.jesse.analyze_report_discuss.exception.DiscussException;
 import com.jesse.analyze_report_discuss.request.DiscussAbstractRequest;
 import com.jesse.core.components.llm_client.LLMClient;
+import com.jesse.core.components.llm_client.exception.LLMClientException;
 import com.jesse.core.pojo.ai.AIModelChatMessage;
 import com.jesse.core.pojo.DeepSeekChatProperties;
 import com.jesse.core.properties.DeepSeekChatPropertiesMap;
@@ -17,7 +17,6 @@ import com.jesse.response_audit.service.AIModelAnswerAuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
 
 import java.util.List;
 
@@ -135,7 +134,7 @@ public class AnalyzeReportDiscussDeepSeekAbstractor
             // (7) 保存本次模型的审计信息
             this.aiModelAnswerAuditService.save(abstractResponse);
         }
-        catch (JsonProcessingException | RestClientException exception)
+        catch (LLMClientException exception)
         {
             log.error(
                 "Abstract context for session: {} failed.",

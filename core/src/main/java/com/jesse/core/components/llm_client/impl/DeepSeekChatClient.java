@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jesse.core.annotation.TimeMonitor;
 import com.jesse.core.components.llm_client.LLMClient;
+import com.jesse.core.components.llm_client.exception.LLMClientException;
 import com.jesse.core.pojo.ai.AIModelChatMessage;
 import com.jesse.core.pojo.ai.AIModelChatThinking;
 import com.jesse.core.pojo.DeepSeekChatProperties;
@@ -22,8 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -83,8 +83,7 @@ public class DeepSeekChatClient implements LLMClient
      * @param properties 模型对话属性配置
      * @param messages   向模型提交的对话 prompt 提示词上下文
      *
-     * @throws JsonProcessingException 响应体 JSON 解析错误时抛出（比如上游模型响应体格式有变化）
-     * @throws RestClientException     当目标服务不可用或者服务器网络问题时抛出
+     * @throws LLMClientException       API 调用错误所抛出的异常
      * @throws IllegalArgumentException 当参数校验失败时抛出
      *
      * @return 模型回答响应体
@@ -98,7 +97,7 @@ public class DeepSeekChatClient implements LLMClient
     )
     public AIModelAnswerResponse
     complete(DeepSeekChatProperties properties, List<AIModelChatMessage> messages)
-        throws JsonProcessingException, RestClientException
+        throws LLMClientException
     {
         DeepSeekChatClient.validateParameters(properties, messages);
 
@@ -121,17 +120,82 @@ public class DeepSeekChatClient implements LLMClient
         request.setReasoningEffort(properties.getReasoningEffort());
         request.setStream(properties.isStream());
 
-        // (2) 向 DeepSeek 模型 API 发起 POST 请求
-        final String responseJSON
-            = this.restTemplate
-                  .postForObject(
-                    properties.getModelEndpointUrl(),
-                    new HttpEntity<>(request, httpHeaders),
-                    String.class
-                  );
+        try
+        {
+            // (2) 向 DeepSeek 模型 API 发起 POST 请求
+            final String responseJSON
+                = this.restTemplate
+                      .postForObject(
+                          properties.getModelEndpointUrl(),
+                          new HttpEntity<>(request, httpHeaders),
+                          String.class
+                      );
 
-        return
-        this.objectMapper.readValue(responseJSON, AIModelAnswerResponse.class);
+            if (!StringUtils.hasText(responseJSON)) {
+                throw new LLMClientException("[DeepSeek] API returned empty response body.");
+            }
+
+            try {
+                return this.objectMapper.readValue(responseJSON, AIModelAnswerResponse.class);
+            }
+            catch (JsonProcessingException jsonProcessingException)
+            {
+                log.error("[DeepSeek] response body parse failed, response JSON: {}", responseJSON);
+                throw new LLMClientException("Response body parse failed.", jsonProcessingException);
+            }
+        }
+        catch (HttpClientErrorException httpClientErrorException)
+        {
+            // 4xx 错误：通常是业务逻辑错误
+            final int status
+                = httpClientErrorException.getStatusCode().value();
+
+            final String body
+                = httpClientErrorException.getResponseBodyAsString();
+
+            log.error("[DeepSeek] Business error, status = {}, response body: {}", status, body);
+
+            // 429 Too Many Requests 响应码表示被下游服务限流
+            if (status == 429)
+            {
+                throw new LLMClientException(
+                    "(429) Rate limit triggered.",
+                    httpClientErrorException
+                );
+            }
+
+            /*
+             * 400 Bad Request（请求体格式非法等）
+             * 401 Unauthorized（API Key 不存在等）
+             * 402 Payment Required（欠费）都不该重试
+             */
+            throw new LLMClientException(
+                "(%d) Non retryable client error.".formatted(status),
+                httpClientErrorException
+            );
+        }
+        catch (HttpServerErrorException httpServerErrorException)
+        {
+            // 5xx 错误：通常是 DeepSeek 服务端挂了
+            final int status
+                = httpServerErrorException.getStatusCode().value();
+
+            log.error("[DeepSeek] Server error, status = {}", status);
+
+            throw new LLMClientException(
+                "(%d) Server error.".formatted(status),
+                httpServerErrorException
+            );
+        }
+        catch (ResourceAccessException resourceAccessException)
+        {
+            // 网络层错误：超时、DNS、TLS 握手失败、连接重置等
+            log.error("[DeepSeek] Network call failed: {}", resourceAccessException.getMessage());
+
+            throw new LLMClientException(
+                "Network exception or timeout.", resourceAccessException
+            );
+        }
     }
 
     /**
@@ -196,6 +260,7 @@ public class DeepSeekChatClient implements LLMClient
         }
         catch (JsonProcessingException exception) {
             log.error("Serialize ai model chat request failed.", exception);
+            throw new IllegalArgumentException("Request argument serialized failed.", exception);
         }
     }
 }

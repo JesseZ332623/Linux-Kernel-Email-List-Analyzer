@@ -1,11 +1,10 @@
 package com.jesse.core.components.llm_client;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.jesse.core.components.llm_client.exception.LLMClientException;
 import com.jesse.core.pojo.ai.AIModelChatMessage;
 import com.jesse.core.pojo.DeepSeekChatProperties;
 import com.jesse.core.response.AIModelAnswerResponse;
 import okhttp3.Callback;
-import org.springframework.web.client.RestClientException;
 
 import java.util.List;
 
@@ -18,15 +17,14 @@ public interface LLMClient
      * @param properties 模型对话属性配置
      * @param messages   向模型提交的对话 prompt 提示词上下文
      *
-     * @throws JsonProcessingException  反序列化响应体 JSON 错误时抛出（比如上游模型响应体格式有变化）
-     * @throws RestClientException      当目标服务不可用或者服务器网络问题时抛出
+     * @throws LLMClientException       API 调用错误所抛出的异常
      * @throws IllegalArgumentException 当参数校验失败时抛出
      *
      * @return 模型回答响应体
      */
     AIModelAnswerResponse
     complete(DeepSeekChatProperties properties, List<AIModelChatMessage> messages)
-        throws JsonProcessingException, RestClientException;
+        throws LLMClientException;
 
     /**
      * 异步流式生成回复。
