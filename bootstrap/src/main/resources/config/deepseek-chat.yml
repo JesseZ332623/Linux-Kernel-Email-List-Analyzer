@@ -25,7 +25,9 @@ app:
       # AI 模型对话端点
       model-endpoint-url: https://api.deepseek.com/chat/completions
       # 模型名称
-      model-name: deepseek-v4-flash
+      # 2026.10.22 修改：2026 年 9 月 10 日 DeepSeek-V4.1-Flash 模型上线，
+      # 新模型名称变更为 deepseek-flash
+      model-name: deepseek-flash
       # 端点访问身份凭证名
       authorization-name: deepseek-analyzer-report-chat-abstract
       # 是否开启推理模式

@@ -14,8 +14,7 @@ INSERT INTO \`application_api_keys\`(\`application_name\`, \`api_key\`) VALUES
 INSERT INTO \`lkml_analyze\`.\`ai_model_token_pricing\`
 (\`model_name\`, \`prompt_cache_hit_price\`, \`prompt_cache_miss_price\`, \`completion_price\`)
 VALUES
-('deepseek-v4-flash', 0.02, 1.00, 2.00),
-('deepseek-v4-pro', 0.025, 3.00, 6.00),
+('deepseek-v4-pro',0.15, 4.50, 13.50),
 ('deepseek-flash', 0.02, 1.00, 4.00);
 EOF
 
